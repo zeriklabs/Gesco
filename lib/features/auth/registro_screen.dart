@@ -96,14 +96,22 @@ class _RegistroScreenState extends State<RegistroScreen> {
   Widget _escritorio() {
     return Row(
       children: [
-        SizedBox(width: 420, child: _RielPasos(actual: _paso)),
+        // Proporción en vez de 420 px fijos, por lo mismo que el login.
+        Expanded(flex: 4, child: _RielPasos(actual: _paso)),
         Expanded(
+          flex: 7,
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(56, AppSpacing.xxl, 56, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xxl + AppSpacing.xs,
+                  AppSpacing.xxl,
+                  AppSpacing.xxl + AppSpacing.xs,
+                  0,
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       '¿Ya tienes cuenta?',
@@ -121,7 +129,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 56),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xxl + AppSpacing.xs,
+                    ),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 500),
                       child: _contenidoPaso(),
@@ -354,33 +364,46 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   ),
                 ),
               )
-            : Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: _regresar,
-                    icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                    label: const Text('Volver'),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 300),
-                      child: _BarraProgreso(actual: _paso, sobreClaro: true),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  ElevatedButton(
-                    onPressed: _continuar,
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Continuar'),
-                        SizedBox(width: AppSpacing.xs),
-                        Icon(Icons.arrow_forward_rounded, size: 18),
-                      ],
-                    ),
-                  ),
-                ],
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  // La barra de progreso es lo primero que se sacrifica si no
+                  // hay ancho: los botones no se pueden perder, ella sí.
+                  final cabeLaBarra = constraints.maxWidth >= 620;
+                  return Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _regresar,
+                        icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                        label: const Text('Volver'),
+                      ),
+                      if (cabeLaBarra) ...[
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 300),
+                            child: _BarraProgreso(
+                              actual: _paso,
+                              sobreClaro: true,
+                            ),
+                          ),
+                        ),
+                      ] else
+                        const Spacer(),
+                      const SizedBox(width: AppSpacing.md),
+                      ElevatedButton(
+                        onPressed: _continuar,
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Continuar'),
+                            SizedBox(width: AppSpacing.xs),
+                            Icon(Icons.arrow_forward_rounded, size: 18),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
       ),
     );
@@ -397,10 +420,31 @@ class _RielPasos extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.guinda,
-      padding: const EdgeInsets.symmetric(horizontal: 42, vertical: 40),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xxl + AppSpacing.xs,
+                    vertical: AppSpacing.xxl + AppSpacing.xs,
+                  ),
+                  child: _contenidoRiel(),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _contenidoRiel() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
           const BrandMark(logoHeight: 38),
           const SizedBox(height: AppSpacing.xxl + AppSpacing.xxs),
           for (final paso in PasoRegistro.values)
@@ -410,6 +454,7 @@ class _RielPasos extends StatelessWidget {
               esUltimo: paso == PasoRegistro.values.last,
             ),
           const Spacer(),
+          const SizedBox(height: AppSpacing.lg),
           Container(
             padding: const EdgeInsets.all(AppSpacing.md + 2),
             decoration: BoxDecoration(
@@ -444,8 +489,7 @@ class _RielPasos extends StatelessWidget {
               ],
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }

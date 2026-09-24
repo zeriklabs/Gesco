@@ -107,14 +107,20 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _construirEscritorio() {
     return Row(
       children: [
-        const SizedBox(width: 600, child: _PanelMarca()),
+        // Proporción, no ancho fijo: con 600 px duros el formulario se quedaba
+        // sin espacio en ventanas de ~1100 y las filas se desbordaban.
+        const Expanded(flex: 5, child: _PanelMarca()),
         Expanded(
+          flex: 6,
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xxxl),
+            padding: const EdgeInsets.all(AppSpacing.xxl + AppSpacing.xs),
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                // Wrap, no Row: si no cabe en una línea, baja el botón en vez
+                // de desbordarse.
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       '¿Eres del departamento?',
@@ -132,7 +138,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Center(
                     child: SingleChildScrollView(
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 440),
+                        constraints: const BoxConstraints(
+                          maxWidth: AppSize.formMaxWidth,
+                        ),
                         child: _formulario(compacto: false),
                       ),
                     ),
@@ -280,33 +288,33 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            Row(
+            // Sin Spacer: el Spacer se come todo el ancho disponible y empuja
+            // al botón fuera cuando el espacio es justo.
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: AppSpacing.xs,
               children: [
-                Flexible(
-                  child: InkWell(
-                    onTap: () =>
-                        setState(() => _mantenerSesion = !_mantenerSesion),
-                    borderRadius: BorderRadius.circular(AppRadius.xs),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Checkbox(
-                          value: _mantenerSesion,
-                          onChanged: (v) =>
-                              setState(() => _mantenerSesion = v ?? false),
-                        ),
-                        Flexible(
-                          child: Text(
-                            'Mantener sesión',
-                            style: AppTypography.bodyMedium
-                                .copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
+                InkWell(
+                  onTap: () =>
+                      setState(() => _mantenerSesion = !_mantenerSesion),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Checkbox(
+                        value: _mantenerSesion,
+                        onChanged: (v) =>
+                            setState(() => _mantenerSesion = v ?? false),
+                      ),
+                      Text(
+                        'Mantener sesión',
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
                 TextButton(
                   onPressed: () {},
                   style: TextButton.styleFrom(foregroundColor: AppColors.muted),
@@ -357,73 +365,88 @@ class _PanelMarca extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.guinda,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: AppSpacing.xxxl,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const BrandMark(logoHeight: 44, subtitulo: 'UPIIZ · Zacatecas'),
-          const Spacer(),
-          Text.rich(
-            TextSpan(
-              text: 'Tus trámites,\nsin dar\n',
-              children: [
-                TextSpan(
-                  text: 'vueltas.',
-                  style: TextStyle(color: AppColors.dorado),
+      // Scroll de seguridad: en una laptop de pantalla corta este panel no
+      // cabe de alto, y sin esto se desborda por abajo.
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xxxl,
+                    vertical: AppSpacing.xxxl,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const BrandMark(
+                        logoHeight: 44,
+                        subtitulo: 'UPIIZ · Zacatecas',
+                      ),
+                      const Spacer(),
+                      Text.rich(
+                        TextSpan(
+                          text: 'Tus trámites,\nsin dar\n',
+                          children: [
+                            TextSpan(
+                              text: 'vueltas.',
+                              style: TextStyle(color: AppColors.dorado),
+                            ),
+                          ],
+                        ),
+                        style: AppTypography.displayLarge.copyWith(
+                          fontSize: 52,
+                          fontWeight: FontWeight.w800,
+                          height: 0.98,
+                          color: AppColors.onGuinda,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'Departamento de Gestión Escolar de la Unidad '
+                        'Interdisciplinaria de Ingeniería.',
+                        style: AppTypography.bodyLarge.copyWith(
+                          height: 1.6,
+                          color: AppColors.onGuindaMuted,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xxl),
+                      const _Ventaja(
+                        icono: Icons.description_outlined,
+                        titulo: 'Genera tus solicitudes en línea',
+                        detalle: 'Reinscripción, dictamen, bajas y GE-01.',
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      const _Ventaja(
+                        icono: Icons.upload_outlined,
+                        titulo: 'Sube tus documentos desde el celular',
+                        detalle: 'Y checa si ya te los aprobaron.',
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      const _Ventaja(
+                        icono: Icons.schedule_rounded,
+                        titulo: 'Capturas tus datos una sola vez',
+                        detalle: 'Todos los trámites los reutilizan.',
+                      ),
+                      const Spacer(),
+                      const SizedBox(height: AppSpacing.xl),
+                      Text(
+                        'gescolar-upiiz@ipn.mx · 492 92 55 998 ext. 83514\n'
+                        '© 2026 UPIIZ · Instituto Politécnico Nacional',
+                        style: AppTypography.hint.copyWith(
+                          color: AppColors.onGuindaFaint,
+                          height: 1.6,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-            style: AppTypography.displayLarge.copyWith(
-              fontSize: 58,
-              fontWeight: FontWeight.w800,
-              height: 0.98,
-              color: AppColors.onGuinda,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 390),
-            child: Text(
-              'Departamento de Gestión Escolar de la Unidad '
-              'Interdisciplinaria de Ingeniería.',
-              style: AppTypography.bodyLarge.copyWith(
-                fontSize: 17,
-                height: 1.6,
-                color: AppColors.onGuindaMuted,
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xxxl),
-          const _Ventaja(
-            icono: Icons.description_outlined,
-            titulo: 'Genera tus solicitudes en línea',
-            detalle: 'Reinscripción, dictamen, bajas y GE-01.',
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const _Ventaja(
-            icono: Icons.upload_outlined,
-            titulo: 'Sube tus documentos desde el celular',
-            detalle: 'Y checa si ya te los aprobaron.',
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const _Ventaja(
-            icono: Icons.schedule_rounded,
-            titulo: 'Capturas tus datos una sola vez',
-            detalle: 'Todos los trámites los reutilizan.',
-          ),
-          const Spacer(),
-          Text(
-            'gescolar-upiiz@ipn.mx · 492 92 55 998 ext. 83514\n'
-            '© 2026 UPIIZ · Instituto Politécnico Nacional',
-            style: AppTypography.hint.copyWith(
-              color: AppColors.onGuindaFaint,
-              height: 1.6,
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -522,22 +545,30 @@ class _TarjetaCrearCuenta extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg + 2),
         border: Border.all(color: AppColors.border, width: 1.5),
       ),
-      child: compacta
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                texto,
-                const SizedBox(height: AppSpacing.sm),
-                boton,
-              ],
-            )
-          : Row(
+      // No basta con mirar si estamos en celular: en escritorio esta tarjeta
+      // también se queda sin ancho. Decide con el espacio real que le tocó.
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cabeEnUnaFila = !compacta && constraints.maxWidth >= 400;
+          if (cabeEnUnaFila) {
+            return Row(
               children: [
                 Expanded(child: texto),
                 const SizedBox(width: AppSpacing.md),
                 boton,
               ],
-            ),
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              texto,
+              const SizedBox(height: AppSpacing.sm),
+              boton,
+            ],
+          );
+        },
+      ),
     );
   }
 }

@@ -26,8 +26,11 @@ abstract final class Breakpoints {
   /// Debajo de esto, una sola columna y navegación inferior.
   static const compact = 600.0;
 
-  /// A partir de aquí cabe el menú lateral de 268 px más contenido útil.
-  static const expanded = 1000.0;
+  /// A partir de aquí cabe el layout de dos paneles sin apretarse.
+  ///
+  /// Estaba en 1000 y no alcanzaba: el panel de marca más el formulario más
+  /// sus márgenes piden ~1100. Entre 1000 y 1100 las filas se desbordaban.
+  static const expanded = 1100.0;
 
   static FormFactor of(BuildContext context) {
     return fromWidth(MediaQuery.sizeOf(context).width);
