@@ -22,8 +22,8 @@ enum Seccion {
 
   /// En la barra inferior no cabe "Mi expediente".
   String get tituloCorto => switch (this) {
-        expediente => 'Expediente',
-        documentos => 'Documentos',
+        Seccion.expediente => 'Expediente',
+        Seccion.documentos => 'Documentos',
         _ => titulo,
       };
 }

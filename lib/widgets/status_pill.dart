@@ -26,42 +26,42 @@ enum EstadoTramite {
   noAplica;
 
   String get etiqueta => switch (this) {
-        aprobado => 'Aprobado',
-        enRevision => 'En revisión',
-        conObservaciones => 'Con observaciones',
-        sinSubir => 'Sin subir',
-        noAplica => 'No aplica',
+        EstadoTramite.aprobado => 'Aprobado',
+        EstadoTramite.enRevision => 'En revisión',
+        EstadoTramite.conObservaciones => 'Con observaciones',
+        EstadoTramite.sinSubir => 'Sin subir',
+        EstadoTramite.noAplica => 'No aplica',
       };
 
   /// Cada estado tiene icono propio además de color: el color por sí solo deja
   /// fuera a quien no lo distingue.
   IconData get icono => switch (this) {
-        aprobado => Icons.check_rounded,
-        enRevision => Icons.schedule_rounded,
-        conObservaciones => Icons.priority_high_rounded,
-        sinSubir => Icons.arrow_upward_rounded,
-        noAplica => Icons.remove_rounded,
+        EstadoTramite.aprobado => Icons.check_rounded,
+        EstadoTramite.enRevision => Icons.schedule_rounded,
+        EstadoTramite.conObservaciones => Icons.priority_high_rounded,
+        EstadoTramite.sinSubir => Icons.arrow_upward_rounded,
+        EstadoTramite.noAplica => Icons.remove_rounded,
       };
 
   Color get fondo => switch (this) {
-        aprobado => AppColors.successTint,
-        enRevision => AppColors.warningTint,
-        conObservaciones => AppColors.danger,
-        sinSubir => AppColors.neutralTint,
-        noAplica => AppColors.neutralTint,
+        EstadoTramite.aprobado => AppColors.successTint,
+        EstadoTramite.enRevision => AppColors.warningTint,
+        EstadoTramite.conObservaciones => AppColors.danger,
+        EstadoTramite.sinSubir => AppColors.neutralTint,
+        EstadoTramite.noAplica => AppColors.neutralTint,
       };
 
   Color get tinta => switch (this) {
-        aprobado => AppColors.successInk,
-        enRevision => AppColors.warningInk,
-        conObservaciones => AppColors.onGuinda,
-        sinSubir => AppColors.muted,
-        noAplica => AppColors.muted,
+        EstadoTramite.aprobado => AppColors.successInk,
+        EstadoTramite.enRevision => AppColors.warningInk,
+        EstadoTramite.conObservaciones => AppColors.onGuinda,
+        EstadoTramite.sinSubir => AppColors.muted,
+        EstadoTramite.noAplica => AppColors.muted,
       };
 
   /// `true` cuando el alumno tiene que hacer algo.
   bool get requiereAccion =>
-      this == conObservaciones || this == sinSubir;
+      this == EstadoTramite.conObservaciones || this == EstadoTramite.sinSubir;
 }
 
 /// Píldora de estado.
