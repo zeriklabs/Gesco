@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../core/layout/breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
-import '../../core/utils/validators.dart';
 import '../../widgets/brand_mark.dart';
-import '../../widgets/gesco_text_field.dart';
+import '../home/home_screen.dart';
+import 'pasos/paso_correo.dart';
+import 'pasos/paso_cuenta.dart';
+import 'pasos/paso_escolares.dart';
+import 'pasos/paso_generales.dart';
+import 'pasos/paso_personales.dart';
+import 'pasos/paso_tutor.dart';
+import 'registro_datos.dart';
 
 /// Los seis pasos del alta.
 ///
@@ -28,6 +33,8 @@ enum PasoRegistro {
   final String descripcion;
 
   int get numero => index + 1;
+  bool get esUltimo => index == PasoRegistro.values.length - 1;
+
   static int get total => PasoRegistro.values.length;
 }
 
@@ -39,40 +46,68 @@ class RegistroScreen extends StatefulWidget {
 }
 
 class _RegistroScreenState extends State<RegistroScreen> {
-  PasoRegistro _paso = PasoRegistro.cuenta;
+  final _datos = RegistroDatos();
 
-  final _formCuenta = GlobalKey<FormState>();
-  final _boleta = TextEditingController();
-  final _correo = TextEditingController();
-  final _password = TextEditingController();
-  final _password2 = TextEditingController();
-  bool _aceptaAviso = false;
+  /// Un Form por paso: así cada uno valida lo suyo y nada más.
+  late final _formKeys = {
+    for (final paso in PasoRegistro.values) paso: GlobalKey<FormState>(),
+  };
+
+  PasoRegistro _paso = PasoRegistro.cuenta;
 
   @override
   void dispose() {
-    _boleta.dispose();
-    _correo.dispose();
-    _password.dispose();
-    _password2.dispose();
+    _datos.dispose();
     super.dispose();
   }
 
+  void _avisar(String mensaje) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(mensaje)));
+  }
+
+  /// Reglas que no caben en el validador de un solo campo.
+  String? _reglaExtra(PasoRegistro paso) {
+    return switch (paso) {
+      PasoRegistro.cuenta =>
+        _datos.aceptaAviso ? null : 'Falta aceptar el aviso de privacidad',
+      PasoRegistro.correo => _datos.codigo.text.length == 6
+          ? null
+          : 'Escribe los 6 dígitos del código',
+      _ => null,
+    };
+  }
+
   void _continuar() {
-    if (_paso == PasoRegistro.cuenta) {
-      if (!_formCuenta.currentState!.validate()) return;
-      if (!_aceptaAviso) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Falta aceptar el aviso de privacidad'),
-          ),
-        );
-        return;
-      }
+    final form = _formKeys[_paso]!.currentState;
+    if (form != null && !form.validate()) return;
+
+    final problema = _reglaExtra(_paso);
+    if (problema != null) {
+      _avisar(problema);
+      return;
     }
 
-    final siguiente = _paso.index + 1;
-    if (siguiente >= PasoRegistro.total) return;
-    setState(() => _paso = PasoRegistro.values[siguiente]);
+    // El domicilio del tutor se copia al salir de datos personales, para que
+    // el paso del tutor ya lo muestre resuelto.
+    if (_paso == PasoRegistro.personales) _datos.sincronizarDomicilioTutor();
+
+    if (_paso.esUltimo) {
+      _terminar();
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() => _paso = PasoRegistro.values[_paso.index + 1]);
+  }
+
+  void _terminar() {
+    // TODO(backend): aquí se manda el alta completa.
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      (_) => false,
+    );
   }
 
   void _regresar() {
@@ -80,6 +115,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
       Navigator.of(context).pop();
       return;
     }
+    FocusScope.of(context).unfocus();
     setState(() => _paso = PasoRegistro.values[_paso.index - 1]);
   }
 
@@ -96,7 +132,6 @@ class _RegistroScreenState extends State<RegistroScreen> {
   Widget _escritorio() {
     return Row(
       children: [
-        // Proporción en vez de 420 px fijos, por lo mismo que el login.
         Expanded(flex: 4, child: _RielPasos(actual: _paso)),
         Expanded(
           flex: 7,
@@ -127,14 +162,30 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 ),
               ),
               Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xxl + AppSpacing.xs,
-                    ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.xxl + AppSpacing.xs,
+                    AppSpacing.lg,
+                    AppSpacing.xxl + AppSpacing.xs,
+                    AppSpacing.xxl,
+                  ),
+                  child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 500),
-                      child: _contenidoPaso(),
+                      constraints: const BoxConstraints(maxWidth: 620),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'PASO ${_paso.numero} DE ${PasoRegistro.total}',
+                            style: AppTypography.overline
+                                .copyWith(color: AppColors.guinda),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(_paso.titulo, style: AppTypography.displayLarge),
+                          const SizedBox(height: AppSpacing.md),
+                          _contenidoPaso(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -158,8 +209,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.xl,
-                AppSpacing.sm,
+                AppSpacing.md,
+                AppSpacing.xs,
                 AppSpacing.xl,
                 AppSpacing.lg,
               ),
@@ -207,7 +258,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.gutterMobile),
-            child: _contenidoPaso(compacto: true),
+            child: _contenidoPaso(),
           ),
         ),
         _barraInferior(compacta: true),
@@ -217,131 +268,35 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
   // --- Contenido -----------------------------------------------------------
 
-  Widget _contenidoPaso({bool compacto = false}) {
-    return switch (_paso) {
-      PasoRegistro.cuenta => _pasoCuenta(compacto: compacto),
-      _ => _PasoPendiente(paso: _paso),
-    };
-  }
-
-  Widget _pasoCuenta({required bool compacto}) {
-    return Form(
-      key: _formCuenta,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!compacto) ...[
-            Text(
-              'PASO ${_paso.numero} DE ${PasoRegistro.total}',
-              style: AppTypography.overline.copyWith(color: AppColors.guinda),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text('Crea tu cuenta', style: AppTypography.displayLarge),
-            const SizedBox(height: AppSpacing.xs),
-          ],
-          Text(
-            'Usa el correo que revisas de verdad: ahí te avisamos cuando '
-            'Gestión Escolar apruebe o rechace algo.',
-            style: AppTypography.bodyLarge.copyWith(color: AppColors.muted),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-
-          GescoTextField(
-            label: 'Boleta o preboleta',
-            controller: _boleta,
-            hintText: '2023670029',
-            helperText:
-                'Si eres de nuevo ingreso usa tu preboleta con guion: PE-12345678.',
-            isRequired: true,
-            textCapitalization: TextCapitalization.characters,
-            inputFormatters: [
-              LengthLimitingTextInputFormatter(11),
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9A-Za-z\-]')),
-            ],
-            textInputAction: TextInputAction.next,
-            validator: Validators.boleta,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-
-          GescoTextField(
-            label: 'Correo electrónico',
-            controller: _correo,
-            hintText: 'tucorreo@gmail.com',
-            isRequired: true,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            validator: Validators.correo,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-
-          GescoPasswordField(
-            label: 'Contraseña',
-            controller: _password,
-            validator: Validators.contrasena,
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-
-          GescoPasswordField(
-            label: 'Confirmar contraseña',
-            controller: _password2,
-            validator: (v) =>
-                Validators.confirmarContrasena(v, _password.text),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          _ReglasContrasena(valor: _password.text),
-          const SizedBox(height: AppSpacing.lg),
-
-          InkWell(
-            onTap: () => setState(() => _aceptaAviso = !_aceptaAviso),
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Checkbox(
-                  value: _aceptaAviso,
-                  onChanged: (v) => setState(() => _aceptaAviso = v ?? false),
-                ),
-                const SizedBox(width: AppSpacing.xxs),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 11),
-                    child: Text.rich(
-                      TextSpan(
-                        text: 'Acepto que la UPIIZ trate mis datos para fines '
-                            'de gestión escolar. ',
-                        children: [
-                          TextSpan(
-                            text: 'Aviso de privacidad',
-                            style: TextStyle(
-                              color: AppColors.guinda,
-                              fontWeight: FontWeight.w700,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ],
-                      ),
-                      style: AppTypography.bodyMedium
-                          .copyWith(fontSize: 13.5, height: 1.5),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  Widget _contenidoPaso() {
+    final key = _formKeys[_paso]!;
+    // La key del widget fuerza a que cada paso se reconstruya limpio cuando se
+    // cambia de paso, en vez de heredar el estado del anterior.
+    return KeyedSubtree(
+      key: ValueKey(_paso),
+      child: switch (_paso) {
+        PasoRegistro.cuenta => PasoCuenta(datos: _datos, formKey: key),
+        PasoRegistro.correo => PasoCorreo(datos: _datos, formKey: key),
+        PasoRegistro.personales => PasoPersonales(datos: _datos, formKey: key),
+        PasoRegistro.tutor => PasoTutor(datos: _datos, formKey: key),
+        PasoRegistro.generales => PasoGenerales(datos: _datos, formKey: key),
+        PasoRegistro.escolares => PasoEscolares(datos: _datos, formKey: key),
+      },
     );
   }
 
   Widget _barraInferior({required bool compacta}) {
+    final textoBoton = _paso.esUltimo ? 'Terminar registro' : 'Continuar';
+    final icono = _paso.esUltimo
+        ? Icons.check_rounded
+        : Icons.arrow_forward_rounded;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
-        compacta ? AppSpacing.gutterMobile : 56,
+        compacta ? AppSpacing.gutterMobile : AppSpacing.xxl + AppSpacing.xs,
         AppSpacing.md,
-        compacta ? AppSpacing.gutterMobile : 56,
-        compacta ? AppSpacing.xl : AppSpacing.md,
+        compacta ? AppSpacing.gutterMobile : AppSpacing.xxl + AppSpacing.xs,
+        AppSpacing.md,
       ),
       decoration: const BoxDecoration(
         color: AppColors.surface,
@@ -350,25 +305,31 @@ class _RegistroScreenState extends State<RegistroScreen> {
       child: SafeArea(
         top: false,
         child: compacta
-            ? SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _continuar,
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Continuar'),
-                      SizedBox(width: AppSpacing.xs),
-                      Icon(Icons.arrow_forward_rounded, size: 20),
-                    ],
+            ? Column(
+                children: [
+                  const _AvisoGuardado(),
+                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _continuar,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(textoBoton),
+                          const SizedBox(width: AppSpacing.xs),
+                          Icon(icono, size: 20),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               )
             : LayoutBuilder(
                 builder: (context, constraints) {
-                  // La barra de progreso es lo primero que se sacrifica si no
-                  // hay ancho: los botones no se pueden perder, ella sí.
-                  final cabeLaBarra = constraints.maxWidth >= 620;
+                  // Si no hay ancho, lo primero que se va es la barra de
+                  // progreso: los botones no se pueden perder.
+                  final cabeLaBarra = constraints.maxWidth >= 640;
                   return Row(
                     children: [
                       OutlinedButton.icon(
@@ -380,7 +341,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 300),
+                            constraints: const BoxConstraints(maxWidth: 280),
                             child: _BarraProgreso(
                               actual: _paso,
                               sobreClaro: true,
@@ -392,12 +353,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       const SizedBox(width: AppSpacing.md),
                       ElevatedButton(
                         onPressed: _continuar,
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('Continuar'),
-                            SizedBox(width: AppSpacing.xs),
-                            Icon(Icons.arrow_forward_rounded, size: 18),
+                            Text(textoBoton),
+                            const SizedBox(width: AppSpacing.xs),
+                            Icon(icono, size: 18),
                           ],
                         ),
                       ),
@@ -406,6 +367,28 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 },
               ),
       ),
+    );
+  }
+}
+
+class _AvisoGuardado extends StatelessWidget {
+  const _AvisoGuardado();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.save_outlined, size: 14, color: AppColors.muted),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            'Se guarda solo: puedes salir y volver después',
+            style: AppTypography.hint,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -431,7 +414,7 @@ class _RielPasos extends StatelessWidget {
                     horizontal: AppSpacing.xxl + AppSpacing.xs,
                     vertical: AppSpacing.xxl + AppSpacing.xs,
                   ),
-                  child: _contenidoRiel(),
+                  child: _contenido(),
                 ),
               ),
             ),
@@ -441,35 +424,36 @@ class _RielPasos extends StatelessWidget {
     );
   }
 
-  Widget _contenidoRiel() {
+  Widget _contenido() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-          const BrandMark(logoHeight: 38),
-          const SizedBox(height: AppSpacing.xxl + AppSpacing.xxs),
-          for (final paso in PasoRegistro.values)
-            _FilaPaso(
-              paso: paso,
-              actual: actual,
-              esUltimo: paso == PasoRegistro.values.last,
-            ),
-          const Spacer(),
-          const SizedBox(height: AppSpacing.lg),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md + 2),
-            decoration: BoxDecoration(
-              color: AppColors.guindaDeep,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.schedule_rounded,
-                        size: 16, color: AppColors.dorado),
-                    const SizedBox(width: AppSpacing.xs),
-                    Text(
+        const BrandMark(logoHeight: 38),
+        const SizedBox(height: AppSpacing.xxl + AppSpacing.xxs),
+        for (final paso in PasoRegistro.values)
+          _FilaPaso(
+            paso: paso,
+            actual: actual,
+            esUltimo: paso == PasoRegistro.values.last,
+          ),
+        const Spacer(),
+        const SizedBox(height: AppSpacing.lg),
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md + 2),
+          decoration: BoxDecoration(
+            color: AppColors.guindaDeep,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.schedule_rounded,
+                      size: 16, color: AppColors.dorado),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
                       'Toma unos 8 minutos',
                       style: AppTypography.bodyMedium.copyWith(
                         fontSize: 13.5,
@@ -477,18 +461,19 @@ class _RielPasos extends StatelessWidget {
                         color: AppColors.onGuinda,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Puedes salir cuando quieras: se guarda solo y regresas '
-                  'donde te quedaste.',
-                  style: AppTypography.hint
-                      .copyWith(color: AppColors.onGuindaMuted, height: 1.5),
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Puedes salir cuando quieras: se guarda solo y regresas donde '
+                'te quedaste.',
+                style: AppTypography.hint
+                    .copyWith(color: AppColors.onGuindaMuted, height: 1.5),
+              ),
+            ],
           ),
+        ),
       ],
     );
   }
@@ -575,9 +560,8 @@ class _FilaPaso extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     paso.descripcion,
-                    style: AppTypography.hint.copyWith(
-                      color: AppColors.onGuindaFaint,
-                    ),
+                    style: AppTypography.hint
+                        .copyWith(color: AppColors.onGuindaFaint),
                   ),
                 ],
               ),
@@ -618,77 +602,6 @@ class _BarraProgreso extends StatelessWidget {
             const SizedBox(width: AppSpacing.xxs + 1),
         ],
       ],
-    );
-  }
-}
-
-class _ReglasContrasena extends StatelessWidget {
-  const _ReglasContrasena({required this.valor});
-
-  final String valor;
-
-  @override
-  Widget build(BuildContext context) {
-    final reglas = <String, bool>{
-      '8 caracteres': valor.length >= 8,
-      'Una mayúscula': RegExp(r'[A-ZÁÉÍÓÚÑ]').hasMatch(valor),
-      'Un número': RegExp(r'\d').hasMatch(valor),
-    };
-
-    return Wrap(
-      spacing: AppSpacing.lg,
-      runSpacing: AppSpacing.xs,
-      children: [
-        for (final MapEntry(key: texto, value: ok) in reglas.entries)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                ok ? Icons.check_rounded : Icons.circle_outlined,
-                size: 15,
-                color: ok ? AppColors.success : AppColors.placeholder,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                texto,
-                style: AppTypography.hint.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: ok ? AppColors.success : AppColors.placeholder,
-                ),
-              ),
-            ],
-          ),
-      ],
-    );
-  }
-}
-
-/// Marcador para los pasos que todavía no se construyen.
-class _PasoPendiente extends StatelessWidget {
-  const _PasoPendiente({required this.paso});
-
-  final PasoRegistro paso;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
-        color: AppColors.ground,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.border, width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(paso.titulo, style: AppTypography.displaySmall),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            '${paso.descripcion}. Pantalla en construcción.',
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.muted),
-          ),
-        ],
-      ),
     );
   }
 }
