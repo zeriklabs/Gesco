@@ -296,6 +296,12 @@ class _GrupoTramite extends StatelessWidget {
       context: context,
       backgroundColor: AppColors.surface,
       showDragHandle: true,
+      // Sin esto la hoja se queda en 9/16 de la pantalla y el detalle con
+      // observacion larga se desborda por abajo.
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+      ),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.sheet),
@@ -333,12 +339,12 @@ class _DetalleDocumento extends StatelessWidget {
     final d = documento;
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
           AppSpacing.lg + 2,
           0,
           AppSpacing.lg + 2,
-          AppSpacing.lg,
+          AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
