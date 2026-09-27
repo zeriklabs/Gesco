@@ -7,8 +7,10 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/brand_mark.dart';
+import '../documentos/documentos_screen.dart';
 import '../expediente/expediente_screen.dart';
 import '../inicio/inicio_screen.dart';
+import '../solicitudes/solicitudes_screen.dart';
 
 /// El armazón de la aplicación.
 ///
@@ -30,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget get _contenido => switch (_seccion) {
         Seccion.inicio => InicioScreen(onIr: _ir),
         Seccion.expediente => ExpedienteScreen(onIr: _ir),
+        Seccion.solicitudes => SolicitudesScreen(onIr: _ir),
+        Seccion.documentos => DocumentosScreen(onIr: _ir),
         _ => _EnConstruccion(seccion: _seccion),
       };
 
