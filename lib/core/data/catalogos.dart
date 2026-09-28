@@ -72,6 +72,32 @@ abstract final class Catalogos {
     'POR ENCIMA DE LA MÁXIMA',
   ];
 
+  /// Por qué el alumno acude a la Comisión de Situación Escolar.
+  ///
+  /// TODO(gescolar): el catálogo real está en el desplegable de la solicitud de
+  /// dictamen; en las capturas no se alcanzó a leer completo. Estas son las
+  /// causas que contempla el reglamento, pero hay que confirmarlas: una causa
+  /// mal elegida cambia el dictamen que emite la comisión.
+  static const causasCosie = <String>[
+    'Agotó las oportunidades para acreditar una unidad de aprendizaje',
+    'Excedió el tiempo reglamentario para concluir el programa',
+    'No cumple con la carga mínima de créditos',
+    'Solicita reingreso después de una baja',
+    'Otra',
+  ];
+
+  /// Qué lo dejó fuera del reglamento.
+  ///
+  /// TODO(gescolar): mismo caso que [causasCosie], confirmar contra el sistema.
+  static const motivosFueraReglamento = <String>[
+    'Reprobó unidades de aprendizaje',
+    'Problemas de salud',
+    'Problemas económicos',
+    'Problemas familiares',
+    'Trabajo u horario incompatible',
+    'Otra',
+  ];
+
   /// Municipios de Zacatecas. Los de otros estados los tendría que dar la API.
   ///
   /// TODO(gescolar): idealmente el código postal resuelve colonia, municipio y

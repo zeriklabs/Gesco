@@ -9,6 +9,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/gesco_card.dart';
 import '../../widgets/status_pill.dart';
+import 'dictamen_screen.dart';
 import 'reinscripcion_screen.dart';
 
 /// El catálogo de trámites.
@@ -129,14 +130,21 @@ class SolicitudesScreen extends StatelessWidget {
   }
 
   void _abrir(BuildContext context, TipoTramite tipo) {
-    if (tipo == TipoTramite.reinscripcion) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ReinscripcionScreen()),
+    final pantalla = switch (tipo) {
+      TipoTramite.reinscripcion => const ReinscripcionScreen(),
+      TipoTramite.dictamen => const DictamenScreen(),
+      _ => null,
+    };
+
+    if (pantalla == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${tipo.titulo}: pantalla en construcción')),
       );
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${tipo.titulo}: pantalla en construcción')),
+
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => pantalla),
     );
   }
 }

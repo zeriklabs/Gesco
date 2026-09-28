@@ -20,6 +20,34 @@ abstract final class DatosDemo {
   static const carrera = 'Ing. en Sistemas Computacionales';
   static const grupo = '8CM1';
 
+  // Historial escolar. En el sistema actual el alumno lo teclea otra vez en
+  // cada solicitud que lo pide; aquí sale del expediente.
+  static const periodoIngresoIpn = '23/1';
+  static const ultimoPeriodoInscrito = '26/2';
+  static const ultimoNivel = 'NIVEL III';
+  static const ultimoGrupo = '8CM1';
+
+  /// Unidades de aprendizaje reprobadas.
+  ///
+  /// Es lo único de carácter académico que GESCO sí tiene, porque lo captura
+  /// el alumno. Las calificaciones y el kardex viven en el SAES.
+  static const adeudos = <Adeudo>[
+    Adeudo(
+      unidadAprendizaje: 'Análisis y Diseño de Algoritmos',
+      nivel: 'NIVEL II',
+      periodoReprobada: '25/2',
+      semestreReprobada: '5to',
+      estado: 'RECURSAMIENTO',
+    ),
+    Adeudo(
+      unidadAprendizaje: 'Teoría de la Computación',
+      nivel: 'NIVEL II',
+      periodoReprobada: '26/1',
+      semestreReprobada: '6to',
+      estado: 'ETS',
+    ),
+  ];
+
   static String get iniciales {
     final partes = nombreAlumno.split(' ');
     if (partes.length < 2) return nombreAlumno.substring(0, 2).toUpperCase();
@@ -28,7 +56,7 @@ abstract final class DatosDemo {
 
   static Expediente get expediente => Expediente(
         actualizadoEl: DateTime(2026, 9, 24, 11, 42),
-        adeudos: const [],
+        adeudos: adeudos,
         secciones: const {
           SeccionExpediente.personales: ResumenSeccion(
             camposLlenos: 21,
@@ -137,6 +165,47 @@ abstract final class DatosDemo {
           periodo: '26/2',
           creadoEl: DateTime(2026, 3, 14),
           resumen: '1 unidad dada de baja',
+        ),
+      ];
+
+  /// Los cinco documentos de COSIE.
+  ///
+  /// En el GESCO actual son una pestaña propia del menú, desconectada de la
+  /// solicitud de dictamen. Aquí son el último paso de esa solicitud, que es
+  /// el único lugar donde tienen sentido.
+  static List<Documento> get documentosCosie => [
+        const Documento(
+          id: 'cosie-oficio-consejo',
+          nombre: 'Oficio para el consejo',
+          estado: EstadoTramite.sinSubir,
+        ),
+        const Documento(
+          id: 'cosie-solicitud',
+          nombre: 'Solicitud de dictamen firmada',
+          estado: EstadoTramite.sinSubir,
+        ),
+        Documento(
+          id: 'cosie-boleta-global',
+          nombre: 'Boleta global',
+          estado: EstadoTramite.aprobado,
+          nombreArchivo: 'boleta_global.pdf',
+          bytes: 310000,
+          subidoEl: DateTime(2026, 9, 15),
+          revisadoEl: DateTime(2026, 9, 16),
+          revisadoPor: 'Gestión Escolar',
+        ),
+        const Documento(
+          id: 'cosie-comprobatorios',
+          nombre: 'Documentos comprobatorios',
+          estado: EstadoTramite.sinSubir,
+        ),
+        Documento(
+          id: 'cosie-saes',
+          nombre: 'Estado general del SAES',
+          estado: EstadoTramite.enRevision,
+          nombreArchivo: 'estado_saes.pdf',
+          bytes: 190000,
+          subidoEl: DateTime(2026, 9, 25),
         ),
       ];
 
