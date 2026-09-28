@@ -9,11 +9,14 @@ import '../../core/models/expediente.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../widgets/bloque_adeudos.dart';
 import '../../widgets/fila_documento.dart';
 import '../../widgets/gesco_card.dart';
 import '../../widgets/gesco_select.dart';
 import '../../widgets/gesco_text_field.dart';
 import '../../widgets/status_pill.dart';
+import '../../widgets/subir_archivo.dart';
+import '../../widgets/wizard.dart';
 import '../adeudos/adeudos_screen.dart';
 
 /// La solicitud de dictamen ante la Comisión de Situación Escolar (COSIE).
@@ -203,8 +206,11 @@ class _DictamenScreenState extends State<DictamenScreen> {
       );
   }
 
-  /// TODO(backend): aquí va el selector de archivos y la subida real.
-  void _subir(Documento doc) {
+  /// TODO(backend): la subida real. El selector ya pregunta qué archivo.
+  Future<void> _subir(Documento doc) async {
+    final archivo = await pedirArchivo(context, nombreDocumento: doc.nombre);
+    if (archivo == null || !mounted) return;
+
     setState(() {
       _documentos = [
         for (final d in _documentos)
@@ -215,7 +221,7 @@ class _DictamenScreenState extends State<DictamenScreen> {
       ];
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${doc.nombre}: enviado a revisión')),
+      SnackBar(content: Text('$archivo: enviado a revisión')),
     );
   }
 
@@ -269,7 +275,10 @@ class _DictamenScreenState extends State<DictamenScreen> {
       ),
       body: Column(
         children: [
-          _BarraPasos(actual: _paso),
+          BarraPasos(
+            pasos: [for (final p in _Paso.values) (p.titulo, p.icono)],
+            actual: _paso.index,
+          ),
           Expanded(
             child: ListView(
               padding: EdgeInsets.all(
@@ -289,11 +298,16 @@ class _DictamenScreenState extends State<DictamenScreen> {
               ],
             ),
           ),
-          _PieAcciones(
-            paso: _paso,
-            puedeGenerar: _documentosListos,
+          PieWizard(
             onAtras: _paso == _Paso.adeudos ? null : _retroceder,
             onSiguiente: _avanzar,
+            habilitado: _paso != _Paso.documentos || _documentosListos,
+            etiqueta: _paso == _Paso.documentos
+                ? 'Generar solicitud'
+                : 'Continuar',
+            icono: _paso == _Paso.documentos
+                ? Icons.picture_as_pdf_outlined
+                : Icons.arrow_forward_rounded,
           ),
         ],
       ),
@@ -325,29 +339,13 @@ class _DictamenScreenState extends State<DictamenScreen> {
                   titulo: 'Unidades que debes',
                   nota: 'Salen de tu expediente',
                 ),
-                if (_adeudos.isEmpty)
-                  Text(
-                    'Tu expediente no registra adeudos. Si vas a dictamen por '
-                    'unidades reprobadas, agrégalas aquí mismo.',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.inkSecondary,
-                      height: 1.5,
-                    ),
-                  )
-                else
-                  for (final a in _adeudos)
-                    _FilaAdeudoCompacta(
-                      adeudo: a,
-                      onQuitar: () => _quitarAdeudo(a),
-                    ),
-                const SizedBox(height: AppSpacing.sm),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: OutlinedButton.icon(
-                    onPressed: _agregarAdeudo,
-                    icon: const Icon(Icons.add_rounded, size: 17),
-                    label: const Text('Agregar un adeudo'),
-                  ),
+                BloqueAdeudos(
+                  adeudos: _adeudos,
+                  onAgregar: _agregarAdeudo,
+                  onQuitar: _quitarAdeudo,
+                  textoVacio: 'Tu expediente no registra materias que debas. '
+                      'Si vas a dictamen por materias reprobadas, agrégalas '
+                      'aquí mismo.',
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 const SeccionForm(
@@ -780,64 +778,6 @@ class _Intro extends StatelessWidget {
   }
 }
 
-/// Un adeudo dentro de la solicitud, sin salirse a la sección de Adeudos.
-class _FilaAdeudoCompacta extends StatelessWidget {
-  const _FilaAdeudoCompacta({required this.adeudo, required this.onQuitar});
-
-  final Adeudo adeudo;
-  final VoidCallback onQuitar;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.sm + 2,
-          AppSpacing.xs,
-          AppSpacing.xxs,
-          AppSpacing.xs,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.ground,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border, width: 1.5),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    adeudo.unidadAprendizaje,
-                    style: AppTypography.bodyMedium.copyWith(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    '${adeudo.nivel} · reprobada en '
-                    '${adeudo.periodoReprobada} · ${adeudo.estado}',
-                    style: AppTypography.hint,
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              onPressed: onQuitar,
-              tooltip: 'Quitar ${adeudo.unidadAprendizaje}',
-              icon: const Icon(Icons.close_rounded, size: 17),
-              color: AppColors.muted,
-              visualDensity: VisualDensity.compact,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Lo que ya está capturado y no se vuelve a preguntar.
 class _TarjetaHistorial extends StatelessWidget {
   const _TarjetaHistorial();
@@ -1072,151 +1012,6 @@ class _Cuadran extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Los tres pasos, arriba, siempre visibles.
-class _BarraPasos extends StatelessWidget {
-  const _BarraPasos({required this.actual});
-
-  final _Paso actual;
-
-  @override
-  Widget build(BuildContext context) {
-    final compacto = context.isCompact;
-
-    return Container(
-      color: AppColors.surface,
-      padding: EdgeInsets.symmetric(
-        horizontal:
-            compacto ? AppSpacing.gutterMobile : AppSpacing.gutterDesktop,
-        vertical: AppSpacing.sm + 2,
-      ),
-      child: Row(
-        children: [
-          for (final p in _Paso.values) ...[
-            if (p.index > 0) const SizedBox(width: AppSpacing.xs),
-            Expanded(
-              child: _FilaPaso(paso: p, actual: actual, compacto: compacto),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _FilaPaso extends StatelessWidget {
-  const _FilaPaso({
-    required this.paso,
-    required this.actual,
-    required this.compacto,
-  });
-
-  final _Paso paso;
-  final _Paso actual;
-  final bool compacto;
-
-  @override
-  Widget build(BuildContext context) {
-    final hecho = paso.index < actual.index;
-    final activo = paso == actual;
-    final color = activo || hecho ? AppColors.guinda : AppColors.placeholder;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 4,
-          decoration: BoxDecoration(
-            color: activo || hecho ? AppColors.guinda : AppColors.border,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Row(
-          children: [
-            Icon(
-              hecho ? Icons.check_rounded : paso.icono,
-              size: 15,
-              color: color,
-            ),
-            const SizedBox(width: 5),
-            if (!compacto)
-              Flexible(
-                child: Text(
-                  paso.titulo,
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontSize: 13,
-                    fontWeight: activo ? FontWeight.w800 : FontWeight.w600,
-                    color: color,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Atrás / continuar, fijo al pie.
-class _PieAcciones extends StatelessWidget {
-  const _PieAcciones({
-    required this.paso,
-    required this.puedeGenerar,
-    required this.onAtras,
-    required this.onSiguiente,
-  });
-
-  final _Paso paso;
-  final bool puedeGenerar;
-  final VoidCallback? onAtras;
-  final VoidCallback onSiguiente;
-
-  @override
-  Widget build(BuildContext context) {
-    final compacto = context.isCompact;
-    final ultimo = paso == _Paso.documentos;
-    final habilitado = !ultimo || puedeGenerar;
-
-    return Material(
-      color: AppColors.surface,
-      elevation: 8,
-      shadowColor: const Color(0x14000000),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal:
-                compacto ? AppSpacing.gutterMobile : AppSpacing.gutterDesktop,
-            vertical: AppSpacing.sm + 2,
-          ),
-          child: Row(
-            children: [
-              if (onAtras != null)
-                OutlinedButton.icon(
-                  onPressed: onAtras,
-                  icon: const Icon(Icons.arrow_back_rounded, size: 17),
-                  label: const Text('Atrás'),
-                ),
-              const Spacer(),
-              FilledButton.icon(
-                onPressed: habilitado ? onSiguiente : null,
-                icon: Icon(
-                  ultimo
-                      ? Icons.picture_as_pdf_outlined
-                      : Icons.arrow_forward_rounded,
-                  size: 18,
-                ),
-                label: Text(ultimo ? 'Generar solicitud' : 'Continuar'),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

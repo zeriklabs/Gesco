@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 
 /// Las secciones del alumno.
 ///
+/// Son cuatro, no cinco: "Mis documentos" se quitó. Era un espejo de
+/// Solicitudes —los mismos renglones, sin poder hacer nada con ellos— y dos
+/// lugares para ver lo mismo hacen el proceso más lento, no más rápido. Lo
+/// único que aportaba, reusar un archivo ya subido, vive ahora en el botón de
+/// subir, dentro del trámite.
+///
 /// Vive aparte de la pantalla del armazón para que cualquier pantalla pueda
 /// pedir "llévame a documentos" sin importar el `HomeScreen` y armar un
 /// círculo de imports.
@@ -17,12 +23,6 @@ enum Seccion {
     'Solicitudes',
     Icons.description_rounded,
     Icons.description_outlined,
-  ),
-  documentos(
-    'Mis documentos',
-    Icons.folder_rounded,
-    Icons.folder_outlined,
-    corto: 'Documentos',
   ),
   adeudos('Adeudos', Icons.bar_chart_rounded, Icons.bar_chart_outlined);
 

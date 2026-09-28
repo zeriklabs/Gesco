@@ -445,9 +445,9 @@ class _BloqueDocumentos extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => onIr(Seccion.documentos),
-              icon: const Icon(Icons.visibility_outlined, size: 18),
-              label: const Text('Ver todos mis documentos'),
+              onPressed: () => onIr(Seccion.solicitudes),
+              icon: const Icon(Icons.north_east_rounded, size: 18),
+              label: const Text('Ir al trámite que los pide'),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, AppSize.touchTarget),
               ),

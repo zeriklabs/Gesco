@@ -8,10 +8,15 @@ import '../../core/models/tramite.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../widgets/bloque_adeudos.dart';
 import '../../widgets/brand_mark.dart';
 import '../../widgets/fila_documento.dart';
 import '../../widgets/gesco_card.dart';
+import '../../widgets/gesco_text_field.dart';
 import '../../widgets/status_pill.dart';
+import '../../widgets/subir_archivo.dart';
+import '../../widgets/wizard.dart';
+import '../adeudos/adeudos_screen.dart';
 
 /// La solicitud de reinscripción.
 ///
@@ -19,9 +24,15 @@ import '../../widgets/status_pill.dart';
 /// arma completo con lo que ya está en el expediente — boleta, grupo, turno,
 /// domicilio, situación académica, tutor. No hay una sola pregunta nueva.
 ///
-/// Así que esta pantalla no es un formulario: es una vista previa con sus
-/// documentos al lado, y los documentos se suben aquí mismo, junto al botón
-/// que genera el PDF.
+/// Pero "no hay preguntas nuevas" no quiere decir "no hay nada que hacer": el
+/// expediente envejece. El propio GESCO lo dice en su primera pantalla —
+/// *"reingreso solo actualiza domicilio, teléfono y seguro social"*— y aun así
+/// te manda a recorrer los cuatro pasos del expediente a ver qué cambió.
+///
+/// Así que esto es un asistente de cuatro pasos donde los dos primeros son
+/// **confirmaciones, no formularios**: te enseña lo que ya tenemos y tú dices
+/// si sigue igual. El camino rápido —el de la mayoría, que no se mudó ni
+/// reprobó nada— son dos toques.
 class ReinscripcionScreen extends StatefulWidget {
   const ReinscripcionScreen({super.key});
 
@@ -29,15 +40,77 @@ class ReinscripcionScreen extends StatefulWidget {
   State<ReinscripcionScreen> createState() => _ReinscripcionScreenState();
 }
 
+enum _Paso {
+  datos('Tus datos', Icons.person_outline_rounded),
+  adeudos('Materias que debes', Icons.playlist_add_check_rounded),
+  documentos('Documentos', Icons.folder_outlined),
+  revisar('Revisar y generar', Icons.picture_as_pdf_outlined);
+
+  const _Paso(this.titulo, this.icono);
+
+  final String titulo;
+  final IconData icono;
+}
+
 class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
+  _Paso _paso = _Paso.datos;
+
   late Tramite _tramite = DatosDemo.tramites.firstWhere(
     (t) => t.tipo == TipoTramite.reinscripcion,
   );
 
-  /// Simula la subida de un archivo: pasa a "en revisión".
-  ///
-  /// TODO(backend): aquí va el selector de archivos y la subida real.
-  void _subir(Documento doc) {
+  /// Los campos que el alumno marcó como "cambió", con su valor nuevo.
+  final _editando = <String, TextEditingController>{};
+
+  /// Si ya confirmó que sus datos están bien.
+  bool _datosConfirmados = false;
+
+  /// Si ya confirmó su lista de materias que debe.
+  bool _adeudosConfirmados = false;
+
+  List<Adeudo> get _adeudos => DatosDemo.expediente.adeudos;
+
+  @override
+  void dispose() {
+    for (final c in _editando.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _corregir(String campo, String valorActual) {
+    setState(() {
+      _editando[campo] = TextEditingController(text: valorActual);
+      _datosConfirmados = false;
+    });
+  }
+
+  void _cancelarCorreccion(String campo) {
+    setState(() {
+      _editando.remove(campo)?.dispose();
+    });
+  }
+
+  void _guardarDatos() {
+    for (final MapEntry(key: campo, value: control) in _editando.entries) {
+      final valor = control.text.trim();
+      if (valor.isNotEmpty) DatosDemo.datosDeContacto[campo] = valor;
+    }
+    setState(() {
+      for (final c in _editando.values) {
+        c.dispose();
+      }
+      _editando.clear();
+      _datosConfirmados = true;
+      _paso = _Paso.adeudos;
+    });
+  }
+
+  /// TODO(backend): la subida real. El selector ya pregunta qué archivo.
+  Future<void> _subir(Documento doc) async {
+    final archivo = await pedirArchivo(context, nombreDocumento: doc.nombre);
+    if (archivo == null || !mounted) return;
+
     setState(() {
       _tramite = Tramite(
         id: _tramite.id,
@@ -57,13 +130,64 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${doc.nombre}: enviado a revisión')),
+      SnackBar(content: Text('$archivo: enviado a revisión')),
     );
   }
+
+  Future<void> _agregarAdeudo() async {
+    final nuevo = await pedirAdeudo(context);
+    if (nuevo == null) return;
+    setState(() {
+      DatosDemo.adeudos.add(nuevo);
+      _adeudosConfirmados = false;
+    });
+  }
+
+  void _quitarAdeudo(Adeudo adeudo) {
+    final posicion = _adeudos.indexOf(adeudo);
+    setState(() {
+      DatosDemo.adeudos.remove(adeudo);
+      _adeudosConfirmados = false;
+    });
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('Se quitó ${adeudo.unidadAprendizaje}'),
+          action: SnackBarAction(
+            label: 'Deshacer',
+            onPressed: () =>
+                setState(() => DatosDemo.adeudos.insert(posicion, adeudo)),
+          ),
+        ),
+      );
+  }
+
+  void _avanzar() {
+    switch (_paso) {
+      case _Paso.datos:
+        _guardarDatos();
+      case _Paso.adeudos:
+        setState(() {
+          _adeudosConfirmados = true;
+          _paso = _Paso.documentos;
+        });
+      case _Paso.documentos:
+        setState(() => _paso = _Paso.revisar);
+      case _Paso.revisar:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Generando la solicitud…')),
+        );
+    }
+  }
+
+  void _retroceder() => setState(() => _paso = _Paso.values[_paso.index - 1]);
 
   @override
   Widget build(BuildContext context) {
     final compacto = context.isCompact;
+    final ultimo = _paso == _Paso.revisar;
 
     return Scaffold(
       appBar: AppBar(
@@ -73,99 +197,303 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
           color: AppColors.onGuinda,
           fontSize: compacto ? 17 : 19,
         ),
-        actions: [
-          if (!compacto) ...[
-            TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.edit_outlined, size: 17),
-              label: const Text('Corregir datos'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.onGuindaMuted,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            _BotonGenerar(tramite: _tramite),
-            const SizedBox(width: AppSpacing.md),
-          ],
-        ],
       ),
-      body: ListView(
-        padding: EdgeInsets.all(
-          compacto ? AppSpacing.gutterMobile : AppSpacing.gutterDesktop,
-        ),
+      body: Column(
         children: [
-          const _AvisoSinFormulario(),
-          const SizedBox(height: AppSpacing.md),
-
-          if (compacto) ...[
-            _BloqueDocumentos(tramite: _tramite, onSubir: _subir),
-            const SizedBox(height: AppSpacing.md),
-            const _BloqueOrigenDatos(),
-            const SizedBox(height: AppSpacing.md),
-            const _VistaPrevia(),
-            const SizedBox(height: AppSpacing.md),
-            SizedBox(
-              width: double.infinity,
-              child: _BotonGenerar(tramite: _tramite, ancho: true),
-            ),
-          ] else
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          BarraPasos(
+            pasos: [for (final p in _Paso.values) (p.titulo, p.icono)],
+            actual: _paso.index,
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.all(
+                compacto ? AppSpacing.gutterMobile : AppSpacing.gutterDesktop,
+              ),
               children: [
-                const Expanded(flex: 3, child: _VistaPrevia()),
-                const SizedBox(width: AppSpacing.lg),
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    children: [
-                      const _BloqueOrigenDatos(),
-                      const SizedBox(height: AppSpacing.md),
-                      _BloqueDocumentos(tramite: _tramite, onSubir: _subir),
-                    ],
+                Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: _paso == _Paso.revisar ? 1100 : 720,
+                    ),
+                    child: switch (_paso) {
+                      _Paso.datos => _pasoDatos(),
+                      _Paso.adeudos => _pasoAdeudos(),
+                      _Paso.documentos => _pasoDocumentos(),
+                      _Paso.revisar => _pasoRevisar(compacto),
+                    },
                   ),
                 ),
               ],
             ),
+          ),
+          PieWizard(
+            onAtras: _paso == _Paso.datos ? null : _retroceder,
+            onSiguiente: _avanzar,
+            habilitado: !ultimo || _tramite.listoParaGenerar,
+            etiqueta: switch (_paso) {
+              _Paso.datos => _editando.isEmpty
+                  ? 'Todo sigue igual'
+                  : 'Guardar y continuar',
+              _Paso.revisar => 'Generar PDF',
+              _ => 'Continuar',
+            },
+            icono: switch (_paso) {
+              _Paso.datos when _editando.isEmpty => Icons.check_rounded,
+              _Paso.revisar => Icons.download_rounded,
+              _ => Icons.arrow_forward_rounded,
+            },
+            nota: ultimo && !_tramite.listoParaGenerar
+                ? 'Te faltan documentos aprobados'
+                : null,
+          ),
         ],
       ),
     );
   }
+
+  // --- Paso 1: revisa tus datos ---------------------------------------------
+
+  Widget _pasoDatos() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _Intro(
+          titulo: '¿Sigue igual?',
+          texto: 'De un periodo a otro casi nunca cambia nada, así que esto no '
+              'es un formulario: es una revisada. Si todo está bien, pásale '
+              'derecho. Corrige solo lo que cambió.',
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        GescoCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final MapEntry(key: campo, value: valor)
+                  in DatosDemo.datosDeContacto.entries)
+                _FilaDato(
+                  campo: campo,
+                  valor: valor,
+                  control: _editando[campo],
+                  onCorregir: () => _corregir(campo, valor),
+                  onCancelar: () => _cancelarCorreccion(campo),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        GescoCard(
+          color: AppColors.surfaceAlt,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline_rounded,
+                  size: 17, color: AppColors.muted),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  '¿Y todo lo demás —tu nombre, tu CURP, tu tutor? Está en tu '
+                  'expediente y no cambia de un semestre a otro. Si algo de '
+                  'eso sí cambió, corrígelo en Mi expediente.',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.inkSecondary,
+                    height: 1.55,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- Paso 2: materias que debes -------------------------------------------
+
+  Widget _pasoAdeudos() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _Intro(
+          titulo: '¿Debes alguna materia?',
+          texto: 'Esta lista decide qué documentos te van a pedir abajo y se '
+              'reusa en todos tus trámites. Vale la pena que esté al día.',
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        GescoCard(
+          child: BloqueAdeudos(
+            adeudos: _adeudos,
+            onAgregar: _agregarAdeudo,
+            onQuitar: _quitarAdeudo,
+            textoVacio: 'No debes ninguna materia. Si reprobaste alguna y no '
+                'aparece aquí, agrégala antes de generar tu solicitud.',
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- Paso 3: documentos ---------------------------------------------------
+
+  Widget _pasoDocumentos() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _Intro(
+          titulo: 'Lo que tienes que entregar',
+          texto: 'Solo los que te tocan según tu situación. Los que no te '
+              'aplican van abajo, con el motivo, por si crees que el sistema '
+              'se equivocó.',
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        _BloqueDocumentos(tramite: _tramite, onSubir: _subir),
+      ],
+    );
+  }
+
+  // --- Paso 4: revisar y generar --------------------------------------------
+
+  Widget _pasoRevisar(bool compacto) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _AvisoSinFormulario(),
+        const SizedBox(height: AppSpacing.md),
+        if (compacto) ...[
+          const _BloqueOrigenDatos(),
+          const SizedBox(height: AppSpacing.md),
+          const _VistaPrevia(),
+        ] else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(flex: 3, child: _VistaPrevia()),
+              const SizedBox(width: AppSpacing.lg),
+              const Expanded(flex: 2, child: _BloqueOrigenDatos()),
+            ],
+          ),
+      ],
+    );
+  }
 }
 
-class _BotonGenerar extends StatelessWidget {
-  const _BotonGenerar({required this.tramite, this.ancho = false});
+/// Una línea de contexto al inicio de un paso.
+class _Intro extends StatelessWidget {
+  const _Intro({required this.titulo, required this.texto});
 
-  final Tramite tramite;
-  final bool ancho;
+  final String titulo;
+  final String texto;
 
   @override
   Widget build(BuildContext context) {
-    final listo = tramite.listoParaGenerar;
-    final faltan = tramite.documentosRequeridos - tramite.documentosAprobados;
-
-    return Tooltip(
-      message: listo
-          ? 'Genera el PDF de tu solicitud'
-          : 'Te faltan $faltan documentos aprobados',
-      child: FilledButton.icon(
-        onPressed: listo ? () {} : null,
-        icon: const Icon(Icons.download_rounded, size: 18),
-        label: const Text('Generar PDF'),
-        style: FilledButton.styleFrom(
-          backgroundColor: ancho ? AppColors.guinda : AppColors.onGuinda,
-          foregroundColor: ancho ? AppColors.onGuinda : AppColors.guinda,
-          disabledBackgroundColor:
-              ancho ? AppColors.borderStrong : AppColors.overlayOnGuinda,
-          disabledForegroundColor:
-              ancho ? AppColors.placeholder : AppColors.onGuindaFaint,
-          minimumSize: Size(0, ancho ? AppSize.buttonHeight : 42),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          textStyle: AppTypography.button.copyWith(fontSize: 14.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm + 1),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(titulo, style: AppTypography.displaySmall),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          texto,
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.inkSecondary,
+            height: 1.55,
           ),
         ),
-      ),
+      ],
+    );
+  }
+}
+
+/// Un dato con su valor actual y el botón de corregir.
+///
+/// En modo lectura es un renglón; al tocar "Cambió" se vuelve un campo. Así
+/// el que no tiene nada que corregir —la mayoría— nunca ve un formulario.
+class _FilaDato extends StatelessWidget {
+  const _FilaDato({
+    required this.campo,
+    required this.valor,
+    required this.control,
+    required this.onCorregir,
+    required this.onCancelar,
+  });
+
+  final String campo;
+  final String valor;
+  final TextEditingController? control;
+  final VoidCallback onCorregir;
+  final VoidCallback onCancelar;
+
+  @override
+  Widget build(BuildContext context) {
+    final editando = control != null;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: editando
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                GescoTextField(
+                  label: campo,
+                  controller: control,
+                  maxLines: campo == 'Domicilio' ? 2 : 1,
+                  helperText: 'Antes: $valor',
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: onCancelar,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.muted,
+                    ),
+                    child: const Text('Déjalo como estaba'),
+                  ),
+                ),
+              ],
+            )
+          : Container(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.xs,
+                AppSpacing.sm,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.ground,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: AppColors.border, width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(campo, style: AppTypography.hint),
+                        const SizedBox(height: 2),
+                        Text(
+                          valor,
+                          style: AppTypography.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  TextButton(
+                    onPressed: onCorregir,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.guinda,
+                      textStyle: AppTypography.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                    child: const Text('Cambió'),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }

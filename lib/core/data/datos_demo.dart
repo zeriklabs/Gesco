@@ -34,6 +34,22 @@ abstract final class DatosDemo {
   static const provieneDeBaja = false;
   static const cuentaConDictamen = false;
 
+  /// Los datos que de verdad cambian de un periodo a otro.
+  ///
+  /// El aviso del GESCO actual lo dice él mismo: "reingreso solo actualiza
+  /// domicilio, teléfono y seguro social". Por eso la reinscripción no vuelve
+  /// a pedir los 49 campos del expediente: enseña estos cinco y pregunta si
+  /// siguen igual.
+  ///
+  /// TODO(backend): inventados. Ninguno sale de una persona real.
+  static final datosDeContacto = <String, String>{
+    'Domicilio': 'Av. Hidalgo 118, Centro, Ojocaliente, Zacatecas, 98700',
+    'Teléfono celular': '492 100 2030',
+    'Teléfono fijo': '492 955 1010',
+    'Correo': 'alumno@alumno.ipn.mx',
+    'Número de seguro social': '00000000000',
+  };
+
   /// Las materias del periodo actual.
   ///
   /// Salen del GE-01, que es donde el alumno las inscribe. Tenerlas aquí es
