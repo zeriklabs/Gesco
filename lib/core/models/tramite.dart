@@ -15,7 +15,7 @@ enum TipoTramite {
   ),
   bajaUnidades(
     'Baja de unidades',
-    'Dar de baja UAp del periodo actual.',
+    'Dar de baja materias del periodo actual.',
     Icons.playlist_remove_rounded,
   ),
   dictamen(

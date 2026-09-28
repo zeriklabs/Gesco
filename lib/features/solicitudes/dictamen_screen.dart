@@ -148,15 +148,15 @@ class _DictamenScreenState extends State<DictamenScreen> {
     final a = _acreditadasNum;
     if (c == null || a == null) return null;
     if (a > c) {
-      return 'Acreditaste más unidades de las que cursaste. Revisa los dos '
+      return 'Acreditaste más materias de las que cursaste. Revisa los dos '
           'números.';
     }
     final esperadas = c - a;
     if (esperadas != _adeudadas) {
-      return 'Según estos números adeudas $esperadas unidad'
-          '${esperadas == 1 ? '' : 'es'}, pero arriba tienes '
+      return 'Según estos números debes $esperadas materia'
+          '${esperadas == 1 ? '' : 's'}, pero arriba tienes '
           '$_adeudadas registrada${_adeudadas == 1 ? '' : 's'}. '
-          'Corrige los números o agrega el adeudo que falte.';
+          'Corrige los números o agrega la materia que falte.';
     }
     return null;
   }
@@ -354,18 +354,15 @@ class _DictamenScreenState extends State<DictamenScreen> {
                   titulo: 'Lo que la comisión cuenta',
                   nota: 'No se teclea',
                 ),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  children: [
-                    _Contador(numero: _adeudadas, etiqueta: 'UAp adeudadas'),
-                    _Contador(numero: _recursadas, etiqueta: 'UAp recursadas'),
-                    _Contador(
-                      numero: _acreditadasEts,
-                      etiqueta: 'Acreditadas en E.T.S.',
-                    ),
+                _FilaContadores(
+                  contadores: [
+                    (_adeudadas, 'Materias que debes'),
+                    (_recursadas, 'En recursamiento'),
+                    (_acreditadasEts, 'En E.T.S.'),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.sm + 2),
+                const _Glosario(),
               ],
             ),
           ),
@@ -375,12 +372,12 @@ class _DictamenScreenState extends State<DictamenScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SeccionForm(
-                  titulo: 'Esto sí lo capturas tú',
-                  nota: 'GESCO no tiene tu kardex',
+                  titulo: 'Actualiza estos datos',
+                  nota: 'Vienen del SAES',
                 ),
                 Text(
                   'Estos tres números viven en el SAES, no aquí. Cópialos tal '
-                  'cual: se verifica que cuadren con tus adeudos.',
+                  'cual: se verifica que cuadren con las materias que debes.',
                   style: AppTypography.bodyMedium.copyWith(
                     color: AppColors.inkSecondary,
                     height: 1.5,
@@ -388,10 +385,10 @@ class _DictamenScreenState extends State<DictamenScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 CamposEnFila(
-                  anchoMinimo: 520,
+                  anchoMinimo: 600,
                   children: [
                     GescoTextField(
-                      label: 'UAp cursadas',
+                      label: 'Materias cursadas',
                       controller: _cursadas,
                       isRequired: true,
                       keyboardType: TextInputType.number,
@@ -400,7 +397,7 @@ class _DictamenScreenState extends State<DictamenScreen> {
                       validator: _validarEntero,
                     ),
                     GescoTextField(
-                      label: 'UAp acreditadas',
+                      label: 'Materias acreditadas',
                       controller: _acreditadas,
                       isRequired: true,
                       keyboardType: TextInputType.number,
@@ -409,7 +406,7 @@ class _DictamenScreenState extends State<DictamenScreen> {
                       validator: _validarEntero,
                     ),
                     GescoTextField(
-                      label: 'Promedio en el SAES',
+                      label: 'Promedio del SAES',
                       controller: _promedio,
                       isRequired: true,
                       keyboardType:
@@ -424,7 +421,7 @@ class _DictamenScreenState extends State<DictamenScreen> {
                   BannerAviso(
                     titulo: 'Los números no cuadran',
                     mensaje: aviso,
-                    pie: 'Cursadas = acreditadas + adeudadas.',
+                    pie: 'Cursadas = acreditadas + las que debes.',
                   ),
                 ] else if (_cursadasNum != null && _acreditadasNum != null) ...[
                   const SizedBox(height: AppSpacing.md),
@@ -900,6 +897,103 @@ class _TarjetaHistorial extends StatelessWidget {
   }
 }
 
+/// Los tres contadores, del mismo alto y repartidos a lo ancho.
+///
+/// Estaban en un `Wrap` con ancho fijo: la etiqueta más larga se iba a dos
+/// renglones y esa tarjeta quedaba más alta que las otras dos.
+class _FilaContadores extends StatelessWidget {
+  const _FilaContadores({required this.contadores});
+
+  final List<(int, String)> contadores;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tarjetas = [
+          for (final (numero, etiqueta) in contadores)
+            _Contador(numero: numero, etiqueta: etiqueta),
+        ];
+
+        if (constraints.maxWidth < 380) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < tarjetas.length; i++) ...[
+                if (i > 0) const SizedBox(height: AppSpacing.xs),
+                tarjetas[i],
+              ],
+            ],
+          );
+        }
+
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < tarjetas.length; i++) ...[
+                if (i > 0) const SizedBox(width: AppSpacing.xs),
+                Expanded(child: tarjetas[i]),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Qué quiere decir la jerga de los formatos oficiales.
+///
+/// Va aquí y no en una ayuda escondida porque "UAp" y "E.T.S." aparecen en el
+/// PDF que firma el alumno, y nadie pregunta por miedo a quedar mal.
+class _Glosario extends StatelessWidget {
+  const _Glosario();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 1),
+          child: Icon(Icons.info_outline_rounded,
+              size: 14, color: AppColors.muted),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              style: AppTypography.hint.copyWith(height: 1.5),
+              children: const [
+                TextSpan(
+                  text: 'En los formatos oficiales ',
+                ),
+                TextSpan(
+                  text: 'UAp',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                TextSpan(
+                  text: ' quiere decir unidad de aprendizaje, o sea una '
+                      'materia. ',
+                ),
+                TextSpan(
+                  text: 'E.T.S.',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                TextSpan(
+                  text: ' es el examen a título de suficiencia: la última '
+                      'oportunidad de acreditarla.',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _Contador extends StatelessWidget {
   const _Contador({required this.numero, required this.etiqueta});
 
@@ -909,7 +1003,6 @@ class _Contador extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 148,
       padding: const EdgeInsets.all(AppSpacing.sm + 2),
       decoration: BoxDecoration(
         color: AppColors.surfaceMuted,
@@ -928,8 +1021,18 @@ class _Contador extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 5),
-          Text(etiqueta, style: AppTypography.hint),
-          const SizedBox(height: 5),
+          // Alto fijo de dos renglones: así las tres tarjetas alinean la
+          // etiqueta "AUTOMÁTICO" aunque una etiqueta ocupe dos líneas.
+          SizedBox(
+            height: 12 * 1.45 * 2,
+            child: Text(
+              etiqueta,
+              style: AppTypography.hint,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 3),
           Row(
             children: [
               const Icon(Icons.bolt_rounded, size: 12, color: AppColors.success),

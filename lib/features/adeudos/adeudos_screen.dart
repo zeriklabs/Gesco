@@ -342,9 +342,9 @@ class _TarjetaCuentas extends StatelessWidget {
         adeudos.where((a) => a.estado.toUpperCase().contains('ETS')).length;
 
     final cuentas = [
-      ('UAp adeudadas', adeudos.length),
-      ('UAp recursadas', recursadas),
-      ('Acreditadas en E.T.S.', ets),
+      ('Materias que debes', adeudos.length),
+      ('Materias en recursamiento', recursadas),
+      ('Materias en E.T.S.', ets),
     ];
 
     return GescoCard(
@@ -487,7 +487,7 @@ class _FormAdeudoState extends State<_FormAdeudo> {
               Text('Agregar un adeudo', style: AppTypography.displaySmall),
               const SizedBox(height: AppSpacing.xxs),
               Text(
-                'Una unidad de aprendizaje que reprobaste y todavía debes.',
+                'Una materia que reprobaste y todavía debes.',
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.muted,
                 ),
@@ -499,11 +499,12 @@ class _FormAdeudoState extends State<_FormAdeudo> {
               // No lo invento: un nombre de materia mal escrito por mí sería
               // peor que uno escrito por el alumno.
               GescoTextField(
-                label: 'Unidad de aprendizaje',
+                label: 'Materia',
                 controller: _unidad,
                 isRequired: true,
                 textCapitalization: TextCapitalization.words,
-                helperText: 'Escríbela igual que aparece en el SAES.',
+                helperText: 'Escríbela igual que aparece en el SAES. En los '
+                    'formatos oficiales le dicen "unidad de aprendizaje".',
                 validator: (v) => (v == null || v.trim().length < 4)
                     ? 'Escribe el nombre de la unidad'
                     : null,
