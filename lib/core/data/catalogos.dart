@@ -72,6 +72,45 @@ abstract final class Catalogos {
     'POR ENCIMA DE LA MÁXIMA',
   ];
 
+  /// Los tres niveles del plan de estudios del IPN.
+  static const niveles = <String>['NIVEL I', 'NIVEL II', 'NIVEL III'];
+
+  /// Cómo va a cursar la unidad que debe.
+  ///
+  /// TODO(gescolar): confirmar. El campo "estado" del formulario de adeudos
+  /// aparece en las capturas, pero no se alcanzaron a ver todas sus opciones.
+  static const estadosAdeudo = <String>[
+    'NORMAL',
+    'RECURSAMIENTO',
+    'ETS',
+    'SIN CURSAR',
+  ];
+
+  /// Periodos escolares para capturar "en qué periodo la reprobé".
+  ///
+  /// Se generan hacia atrás desde el periodo actual: nadie reprobó algo en un
+  /// periodo que todavía no ocurre. Ocho años cubren cualquier caso real,
+  /// incluido el de quien va a dictamen por exceder el tiempo reglamentario.
+  static List<String> periodosHasta(String actual, {int anios = 8}) {
+    final partes = actual.split('/');
+    final anio = int.tryParse(partes.first) ?? 27;
+    final semestre = int.tryParse(partes.last) ?? 1;
+
+    final lista = <String>[];
+    var a = anio;
+    var s = semestre;
+    for (var i = 0; i < anios * 2; i++) {
+      lista.add('${a.toString().padLeft(2, '0')}/$s');
+      if (s == 1) {
+        s = 2;
+        a -= 1;
+      } else {
+        s = 1;
+      }
+    }
+    return lista;
+  }
+
   /// Por qué el alumno acude a la Comisión de Situación Escolar.
   ///
   /// TODO(gescolar): el catálogo real está en el desplegable de la solicitud de

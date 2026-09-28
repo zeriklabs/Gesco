@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/brand_mark.dart';
+import '../adeudos/adeudos_screen.dart';
 import '../documentos/documentos_screen.dart';
 import '../expediente/expediente_screen.dart';
 import '../inicio/inicio_screen.dart';
@@ -34,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Seccion.expediente => ExpedienteScreen(onIr: _ir),
         Seccion.solicitudes => SolicitudesScreen(onIr: _ir),
         Seccion.documentos => DocumentosScreen(onIr: _ir),
-        _ => _EnConstruccion(seccion: _seccion),
+        Seccion.adeudos => AdeudosScreen(onIr: _ir),
       };
 
   @override
@@ -291,65 +292,6 @@ class _BarraInferior extends StatelessWidget {
             tooltip: seccion.titulo,
           ),
       ],
-    );
-  }
-}
-
-/// Provisional, para las secciones que todavía no se construyen.
-class _EnConstruccion extends StatelessWidget {
-  const _EnConstruccion({required this.seccion});
-
-  final Seccion seccion;
-
-  @override
-  Widget build(BuildContext context) {
-    final compacto = context.isCompact;
-
-    return Padding(
-      padding: EdgeInsets.all(
-        compacto ? AppSpacing.gutterMobile : AppSpacing.gutterDesktop,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            seccion.titulo,
-            style: compacto
-                ? AppTypography.displayMedium
-                : AppTypography.displayLarge,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(color: AppColors.border, width: 1.5),
-              ),
-              alignment: Alignment.center,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(seccion.icono, size: 34, color: AppColors.placeholder),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(seccion.titulo, style: AppTypography.titleLarge),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      'Pantalla en construcción.',
-                      style: AppTypography.bodyMedium
-                          .copyWith(color: AppColors.muted),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

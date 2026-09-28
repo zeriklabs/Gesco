@@ -14,6 +14,7 @@ import '../../widgets/gesco_card.dart';
 import '../../widgets/gesco_select.dart';
 import '../../widgets/gesco_text_field.dart';
 import '../../widgets/status_pill.dart';
+import '../adeudos/adeudos_screen.dart';
 
 /// La solicitud de dictamen ante la Comisión de Situación Escolar (COSIE).
 ///
@@ -158,6 +159,27 @@ class _DictamenScreenState extends State<DictamenScreen> {
     setState(() => _paso = anterior);
   }
 
+  /// Abre los adeudos sin salirse de la solicitud y vuelve con los tres
+  /// contadores ya recalculados.
+  Future<void> _abrirAdeudos() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (contexto) => Scaffold(
+          appBar: AppBar(
+            leading: const BackButton(),
+            title: const Text('Adeudos'),
+            titleTextStyle: AppTypography.titleLarge.copyWith(
+              color: AppColors.onGuinda,
+              fontSize: 19,
+            ),
+          ),
+          body: AdeudosScreen(onIr: (_) => Navigator.of(contexto).maybePop()),
+        ),
+      ),
+    );
+    if (mounted) setState(() {});
+  }
+
   void _generar() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Generando la solicitud de dictamen…')),
@@ -295,11 +317,7 @@ class _DictamenScreenState extends State<DictamenScreen> {
             recursadas: _recursadas,
             acreditadasEts: _acreditadasEts,
             adeudos: _adeudos,
-            onCorregir: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Adeudos: pantalla en construcción'),
-              ),
-            ),
+            onCorregir: _abrirAdeudos,
           ),
           const SizedBox(height: AppSpacing.lg),
           GescoCard(

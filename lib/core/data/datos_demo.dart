@@ -31,15 +31,20 @@ abstract final class DatosDemo {
   ///
   /// Es lo único de carácter académico que GESCO sí tiene, porque lo captura
   /// el alumno. Las calificaciones y el kardex viven en el SAES.
-  static const adeudos = <Adeudo>[
-    Adeudo(
+  ///
+  /// Es `final` y no `const` a propósito: la pantalla de Adeudos agrega y
+  /// quita elementos aquí para que el cambio se note de inmediato en el
+  /// dictamen, que lee esta misma lista.
+  /// TODO(backend): esto se vuelve una llamada a la API.
+  static final adeudos = <Adeudo>[
+    const Adeudo(
       unidadAprendizaje: 'Análisis y Diseño de Algoritmos',
       nivel: 'NIVEL II',
       periodoReprobada: '25/2',
       semestreReprobada: '5to',
       estado: 'RECURSAMIENTO',
     ),
-    Adeudo(
+    const Adeudo(
       unidadAprendizaje: 'Teoría de la Computación',
       nivel: 'NIVEL II',
       periodoReprobada: '26/1',
