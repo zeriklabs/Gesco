@@ -18,16 +18,25 @@ import '../adeudos/adeudos_screen.dart';
 
 /// La solicitud de dictamen ante la Comisión de Situación Escolar (COSIE).
 ///
-/// Dos cambios de fondo respecto al sistema actual:
+/// El orden importa. El sistema actual —y la primera versión de esta
+/// pantalla— arrancaba preguntando *"¿cuál es la causa por la que acudes a
+/// COSIE?"*, que es la pregunta que el alumno todavía no sabe contestar:
+/// viene con un problema concreto en la cabeza (*"debo tres materias"*), no
+/// con la etiqueta reglamentaria de su problema.
 ///
-/// 1. **Los cinco documentos de COSIE dejan de ser una pestaña del menú** y se
-///    vuelven el último paso de esta solicitud, que es el único lugar donde
-///    significan algo.
-/// 2. **Los seis contadores dejan de ser seis campos vacíos.** Tres salen de
-///    los adeudos que ya están en el expediente y no se teclean; los otros
-///    tres se capturan, pero el sistema verifica que cuadren entre sí. Hoy
-///    nada impide que el alumno escriba 40 cursadas, 38 acreditadas y 5
-///    adeudadas, y la comisión recibe una solicitud que se contradice sola.
+/// Así que se invirtió: primero se captura lo que el alumno sí tiene claro
+/// —lo que debe—, y con eso el sistema le **propone** la causa y le enseña de
+/// qué dato la sacó. La propuesta nunca se aplica sola: se acepta o se
+/// cambia.
+///
+/// Lo demás que trae respecto al sistema actual:
+///
+/// - **Los cinco documentos de COSIE** dejan de ser una pestaña del menú y
+///   son el último paso de esta solicitud.
+/// - **Tres de los seis contadores no se teclean**: salen de los adeudos. Los
+///   otros tres se capturan, pero se verifica que cuadren
+///   (`cursadas = acreditadas + adeudadas`). Hoy nada impide mandar a la
+///   comisión una solicitud que se contradice sola.
 class DictamenScreen extends StatefulWidget {
   const DictamenScreen({super.key});
 
@@ -35,9 +44,11 @@ class DictamenScreen extends StatefulWidget {
   State<DictamenScreen> createState() => _DictamenScreenState();
 }
 
+/// El orden es el argumento de esta pantalla: primero lo que el alumno sabe,
+/// después lo que el sistema deduce, al final el trámite.
 enum _Paso {
-  situacion('Tu situación', Icons.help_outline_rounded),
-  numeros('Los números', Icons.calculate_outlined),
+  adeudos('Qué debes', Icons.playlist_add_check_rounded),
+  situacion('Por qué acudes', Icons.help_outline_rounded),
   documentos('Documentos', Icons.folder_outlined);
 
   const _Paso(this.titulo, this.icono);
@@ -46,14 +57,27 @@ enum _Paso {
   final IconData icono;
 }
 
-class _DictamenScreenState extends State<DictamenScreen> {
-  _Paso _paso = _Paso.situacion;
+/// Una causa propuesta por el sistema, con el dato del que salió.
+///
+/// La razón viaja junto a la propuesta a propósito: una sugerencia sin motivo
+/// es adivinanza, y el alumno no tiene forma de saber si le conviene.
+typedef Sugerencia = ({String causa, String porque});
 
-  final _formSituacion = GlobalKey<FormState>();
+class _DictamenScreenState extends State<DictamenScreen> {
+  _Paso _paso = _Paso.adeudos;
+
   final _formNumeros = GlobalKey<FormState>();
+  final _formSituacion = GlobalKey<FormState>();
 
   String? _causa;
   String? _motivo;
+
+  /// Si ya contestó la propuesta del sistema (o no hubo ninguna).
+  bool _respondioPropuesta = false;
+
+  /// Si pidió cambiar la causa que ya había aceptado.
+  bool _editandoCausa = false;
+
   final _especifica = TextEditingController();
   final _peticion = TextEditingController();
 
@@ -63,7 +87,7 @@ class _DictamenScreenState extends State<DictamenScreen> {
 
   late List<Documento> _documentos = DatosDemo.documentosCosie;
 
-  List<Adeudo> get _adeudos => DatosDemo.expediente.adeudos;
+  List<Adeudo> get _adeudos => DatosDemo.adeudos;
 
   // --- Los tres que salen de los adeudos -----------------------------------
 
@@ -74,6 +98,40 @@ class _DictamenScreenState extends State<DictamenScreen> {
 
   int get _acreditadasEts =>
       _adeudos.where((a) => a.estado.toUpperCase().contains('ETS')).length;
+
+  // --- La causa que el sistema propone --------------------------------------
+
+  /// Qué causa parece ser, según lo que el alumno ya capturó.
+  ///
+  /// El orden de las reglas es el de gravedad: haber agotado oportunidades
+  /// pesa más que traer carga baja. Si nada aplica, no se inventa nada y el
+  /// alumno elige.
+  ///
+  /// TODO(gescolar): confirmar estas reglas. Están deducidas del reglamento y
+  /// de lo que pide el formulario, no validadas con la comisión.
+  Sugerencia? get _sugerencia {
+    if (_acreditadasEts > 0) {
+      return (
+        causa: Catalogos.causasCosie[0],
+        porque: 'tienes $_acreditadasEts unidad'
+            '${_acreditadasEts == 1 ? '' : 'es'} en E.T.S., que es la última '
+            'oportunidad reglamentaria',
+      );
+    }
+    if (DatosDemo.provieneDeBaja) {
+      return (
+        causa: Catalogos.causasCosie[3],
+        porque: 'tu expediente dice que vienes de una baja',
+      );
+    }
+    if (DatosDemo.tipoCarga.toUpperCase().contains('DEBAJO')) {
+      return (
+        causa: Catalogos.causasCosie[2],
+        porque: 'tu carga de este periodo está por debajo de la mínima',
+      );
+    }
+    return null;
+  }
 
   // --- La verificación ------------------------------------------------------
 
@@ -96,9 +154,9 @@ class _DictamenScreenState extends State<DictamenScreen> {
     final esperadas = c - a;
     if (esperadas != _adeudadas) {
       return 'Según estos números adeudas $esperadas unidad'
-          '${esperadas == 1 ? '' : 'es'}, pero tu expediente tiene '
+          '${esperadas == 1 ? '' : 'es'}, pero arriba tienes '
           '$_adeudadas registrada${_adeudadas == 1 ? '' : 's'}. '
-          'Corrige los números o captura los adeudos que falten.';
+          'Corrige los números o agrega el adeudo que falte.';
     }
     return null;
   }
@@ -119,6 +177,32 @@ class _DictamenScreenState extends State<DictamenScreen> {
     super.dispose();
   }
 
+  // --- Acciones -------------------------------------------------------------
+
+  Future<void> _agregarAdeudo() async {
+    final nuevo = await pedirAdeudo(context);
+    if (nuevo == null) return;
+    setState(() => DatosDemo.adeudos.add(nuevo));
+  }
+
+  void _quitarAdeudo(Adeudo adeudo) {
+    final posicion = _adeudos.indexOf(adeudo);
+    setState(() => DatosDemo.adeudos.remove(adeudo));
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('Se quitó ${adeudo.unidadAprendizaje}'),
+          action: SnackBarAction(
+            label: 'Deshacer',
+            onPressed: () =>
+                setState(() => DatosDemo.adeudos.insert(posicion, adeudo)),
+          ),
+        ),
+      );
+  }
+
   /// TODO(backend): aquí va el selector de archivos y la subida real.
   void _subir(Documento doc) {
     setState(() {
@@ -137,14 +221,21 @@ class _DictamenScreenState extends State<DictamenScreen> {
 
   void _avanzar() {
     switch (_paso) {
-      case _Paso.situacion:
-        if (!(_formSituacion.currentState?.validate() ?? false)) return;
-        setState(() => _paso = _Paso.numeros);
-      case _Paso.numeros:
+      case _Paso.adeudos:
         if (!(_formNumeros.currentState?.validate() ?? false)) return;
         if (_contradiccion != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(_contradiccion!)),
+          );
+          return;
+        }
+        // Al llegar a la causa, la propuesta ya está lista y esperando.
+        setState(() => _paso = _Paso.situacion);
+      case _Paso.situacion:
+        if (!(_formSituacion.currentState?.validate() ?? false)) return;
+        if (_causa == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Falta confirmar la causa')),
           );
           return;
         }
@@ -154,31 +245,8 @@ class _DictamenScreenState extends State<DictamenScreen> {
     }
   }
 
-  void _retroceder() {
-    final anterior = _Paso.values[_paso.index - 1];
-    setState(() => _paso = anterior);
-  }
-
-  /// Abre los adeudos sin salirse de la solicitud y vuelve con los tres
-  /// contadores ya recalculados.
-  Future<void> _abrirAdeudos() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (contexto) => Scaffold(
-          appBar: AppBar(
-            leading: const BackButton(),
-            title: const Text('Adeudos'),
-            titleTextStyle: AppTypography.titleLarge.copyWith(
-              color: AppColors.onGuinda,
-              fontSize: 19,
-            ),
-          ),
-          body: AdeudosScreen(onIr: (_) => Navigator.of(contexto).maybePop()),
-        ),
-      ),
-    );
-    if (mounted) setState(() {});
-  }
+  void _retroceder() =>
+      setState(() => _paso = _Paso.values[_paso.index - 1]);
 
   void _generar() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -212,8 +280,8 @@ class _DictamenScreenState extends State<DictamenScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 720),
                     child: switch (_paso) {
+                      _Paso.adeudos => _pasoAdeudos(),
                       _Paso.situacion => _pasoSituacion(),
-                      _Paso.numeros => _pasoNumeros(),
                       _Paso.documentos => _pasoDocumentos(),
                     },
                   ),
@@ -224,7 +292,7 @@ class _DictamenScreenState extends State<DictamenScreen> {
           _PieAcciones(
             paso: _paso,
             puedeGenerar: _documentosListos,
-            onAtras: _paso == _Paso.situacion ? null : _retroceder,
+            onAtras: _paso == _Paso.adeudos ? null : _retroceder,
             onSiguiente: _avanzar,
           ),
         ],
@@ -232,79 +300,9 @@ class _DictamenScreenState extends State<DictamenScreen> {
     );
   }
 
-  // --- Paso 1 ---------------------------------------------------------------
+  // --- Paso 1: qué debes ----------------------------------------------------
 
-  Widget _pasoSituacion() {
-    final esOtraCausa = _causa == 'Otra';
-    final esOtroMotivo = _motivo == 'Otra';
-
-    return Form(
-      key: _formSituacion,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _TarjetaHistorial(),
-          const SizedBox(height: AppSpacing.lg),
-          GescoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SeccionForm(titulo: 'Por qué acudes a la comisión'),
-                GescoSelect<String>(
-                  label: 'Causa por la que acudes a COSIE',
-                  opciones: Catalogos.causasCosie,
-                  value: _causa,
-                  isRequired: true,
-                  onChanged: (v) => setState(() => _causa = v),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                GescoSelect<String>(
-                  label: '¿Qué originó que quedaras fuera del reglamento?',
-                  opciones: Catalogos.motivosFueraReglamento,
-                  value: _motivo,
-                  isRequired: true,
-                  onChanged: (v) => setState(() => _motivo = v),
-                ),
-                // El campo "si selecciona (otras) especifique" del sistema
-                // actual está siempre visible, aunque casi nadie lo use.
-                if (esOtraCausa || esOtroMotivo) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  GescoTextField(
-                    label: 'Especifica cuál',
-                    controller: _especifica,
-                    isRequired: true,
-                    maxLines: 2,
-                    helperText: 'Escogiste "Otra": describe tu caso en una '
-                        'o dos líneas.',
-                    validator: (v) => (v == null || v.trim().length < 5)
-                        ? 'Describe brevemente tu caso'
-                        : null,
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.md),
-                GescoTextField(
-                  label: 'Tu petición a la comisión',
-                  controller: _peticion,
-                  isRequired: true,
-                  maxLines: 5,
-                  hintText: 'Qué le estás pidiendo a la comisión y por qué.',
-                  helperText: 'Es el texto que leen los miembros de COSIE. '
-                      'Escríbelo tú, con tus palabras.',
-                  validator: (v) => (v == null || v.trim().length < 20)
-                      ? 'Escribe al menos un par de renglones'
-                      : null,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- Paso 2 ---------------------------------------------------------------
-
-  Widget _pasoNumeros() {
+  Widget _pasoAdeudos() {
     final aviso = _contradiccion;
 
     return Form(
@@ -312,14 +310,66 @@ class _DictamenScreenState extends State<DictamenScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _TarjetaDerivados(
-            adeudadas: _adeudadas,
-            recursadas: _recursadas,
-            acreditadasEts: _acreditadasEts,
-            adeudos: _adeudos,
-            onCorregir: _abrirAdeudos,
+          const _Intro(
+            titulo: 'Empecemos por lo que debes',
+            texto: 'Con esto el sistema arma tres de los seis contadores que '
+                'pide la comisión y te propone la causa por la que acudes. No '
+                'tienes que saber cómo se llama tu caso en el reglamento.',
           ),
           const SizedBox(height: AppSpacing.lg),
+          GescoCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SeccionForm(
+                  titulo: 'Unidades que debes',
+                  nota: 'Salen de tu expediente',
+                ),
+                if (_adeudos.isEmpty)
+                  Text(
+                    'Tu expediente no registra adeudos. Si vas a dictamen por '
+                    'unidades reprobadas, agrégalas aquí mismo.',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.inkSecondary,
+                      height: 1.5,
+                    ),
+                  )
+                else
+                  for (final a in _adeudos)
+                    _FilaAdeudoCompacta(
+                      adeudo: a,
+                      onQuitar: () => _quitarAdeudo(a),
+                    ),
+                const SizedBox(height: AppSpacing.sm),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: _agregarAdeudo,
+                    icon: const Icon(Icons.add_rounded, size: 17),
+                    label: const Text('Agregar un adeudo'),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                const SeccionForm(
+                  titulo: 'Lo que la comisión cuenta',
+                  nota: 'No se teclea',
+                ),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    _Contador(numero: _adeudadas, etiqueta: 'UAp adeudadas'),
+                    _Contador(numero: _recursadas, etiqueta: 'UAp recursadas'),
+                    _Contador(
+                      numero: _acreditadasEts,
+                      etiqueta: 'Acreditadas en E.T.S.',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
           GescoCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -330,7 +380,7 @@ class _DictamenScreenState extends State<DictamenScreen> {
                 ),
                 Text(
                   'Estos tres números viven en el SAES, no aquí. Cópialos tal '
-                  'cual: abajo se verifica que cuadren con tus adeudos.',
+                  'cual: se verifica que cuadren con tus adeudos.',
                   style: AppTypography.bodyMedium.copyWith(
                     color: AppColors.inkSecondary,
                     height: 1.5,
@@ -404,7 +454,121 @@ class _DictamenScreenState extends State<DictamenScreen> {
     return null;
   }
 
-  // --- Paso 3 ---------------------------------------------------------------
+  // --- Paso 2: por qué acudes ----------------------------------------------
+
+  Widget _pasoSituacion() {
+    final sugerida = _sugerencia;
+    final esOtra = _causa == 'Otra' || _motivo == 'Otra';
+
+    // Tres estados: la propuesta esperando respuesta, la causa ya elegida, o
+    // el selector para escogerla a mano.
+    final esperandoRespuesta = sugerida != null && !_respondioPropuesta;
+    final yaElegida = _causa != null && !_editandoCausa;
+
+    return Form(
+      key: _formSituacion,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (esperandoRespuesta)
+            _Propuesta(
+              sugerencia: sugerida!,
+              onAceptar: () => setState(() {
+                _causa = sugerida!.causa;
+                _respondioPropuesta = true;
+                _editandoCausa = false;
+              }),
+              onRechazar: () => setState(() {
+                _causa = null;
+                _respondioPropuesta = true;
+                _editandoCausa = true;
+              }),
+            )
+          else
+            _Intro(
+              titulo: 'Por qué acudes a la comisión',
+              texto: sugerida == null
+                  ? 'Con lo que capturaste no puedo proponerte una causa sin '
+                      'adivinar, así que la eliges tú.'
+                  : 'Puedes cambiar la causa cuando quieras.',
+            ),
+          const SizedBox(height: AppSpacing.lg),
+          const _TarjetaHistorial(),
+          const SizedBox(height: AppSpacing.md),
+          GescoCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SeccionForm(titulo: 'Tu caso'),
+                // Mientras la propuesta espera respuesta, la causa se
+                // contesta arriba: repetir el desplegable aquí sería
+                // preguntar dos veces lo mismo.
+                if (!esperandoRespuesta) ...[
+                  if (yaElegida)
+                    _CausaElegida(
+                      causa: _causa!,
+                      onCambiar: () => setState(() => _editandoCausa = true),
+                    )
+                  else
+                    GescoSelect<String>(
+                      label: 'Causa por la que acudes a COSIE',
+                      opciones: Catalogos.causasCosie,
+                      value: _causa,
+                      isRequired: true,
+                      onChanged: (v) => setState(() {
+                        _causa = v;
+                        _editandoCausa = false;
+                      }),
+                      validator: (v) => v == null ? 'Elige la causa' : null,
+                    ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+                GescoSelect<String>(
+                  label: '¿Qué originó que quedaras fuera del reglamento?',
+                  opciones: Catalogos.motivosFueraReglamento,
+                  value: _motivo,
+                  isRequired: true,
+                  onChanged: (v) => setState(() => _motivo = v),
+                  validator: (v) => v == null ? 'Elige una opción' : null,
+                ),
+                // El campo "si selecciona (otras) especifique" del sistema
+                // actual está siempre visible, aunque casi nadie lo use.
+                if (esOtra) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  GescoTextField(
+                    label: 'Especifica cuál',
+                    controller: _especifica,
+                    isRequired: true,
+                    maxLines: 2,
+                    helperText: 'Escogiste "Otra": describe tu caso en una o '
+                        'dos líneas.',
+                    validator: (v) => (v == null || v.trim().length < 5)
+                        ? 'Describe brevemente tu caso'
+                        : null,
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.md),
+                GescoTextField(
+                  label: 'Tu petición a la comisión',
+                  controller: _peticion,
+                  isRequired: true,
+                  maxLines: 5,
+                  hintText: 'Qué le estás pidiendo a la comisión y por qué.',
+                  helperText: 'Es el texto que leen los miembros de COSIE. '
+                      'Escríbelo tú, con tus palabras.',
+                  validator: (v) => (v == null || v.trim().length < 20)
+                      ? 'Escribe al menos un par de renglones'
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Paso 3: documentos ---------------------------------------------------
 
   Widget _pasoDocumentos() {
     return Column(
@@ -460,14 +624,219 @@ class _DictamenScreenState extends State<DictamenScreen> {
         ),
         const SizedBox(height: AppSpacing.md),
         if (!_documentosListos)
-          BannerAviso(
+          const BannerAviso(
             titulo: 'Faltan documentos por aprobar',
-            mensaje: 'La solicitud se genera cuando los cinco estén '
-                'aprobados por Gestión Escolar. Los que están en revisión no '
-                'necesitan que hagas nada más.',
+            mensaje: 'La solicitud se genera cuando los cinco estén aprobados '
+                'por Gestión Escolar. Los que están en revisión no necesitan '
+                'que hagas nada más.',
             tono: TonoAviso.informativo,
           ),
       ],
+    );
+  }
+}
+
+/// La causa que el sistema propone, con el dato del que salió.
+class _Propuesta extends StatelessWidget {
+  const _Propuesta({
+    required this.sugerencia,
+    required this.onAceptar,
+    required this.onRechazar,
+  });
+
+  final Sugerencia sugerencia;
+  final VoidCallback onAceptar;
+  final VoidCallback onRechazar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.dangerTint,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.dangerBorder, width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded,
+                  size: 17, color: AppColors.guinda),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                'POR LO QUE CAPTURASTE',
+                style: AppTypography.overline.copyWith(color: AppColors.guinda),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            sugerencia.causa,
+            style: AppTypography.displaySmall.copyWith(fontSize: 19),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Te lo propongo porque ${sugerencia.porque}.',
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.inkSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: [
+              FilledButton.icon(
+                onPressed: onAceptar,
+                icon: const Icon(Icons.check_rounded, size: 18),
+                label: const Text('Sí, es eso'),
+              ),
+              OutlinedButton(
+                onPressed: onRechazar,
+                child: const Text('No, es otra cosa'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// La causa ya aceptada, con opción de cambiarla.
+class _CausaElegida extends StatelessWidget {
+  const _CausaElegida({required this.causa, required this.onCambiar});
+
+  final String causa;
+  final VoidCallback onCambiar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm + 2),
+      decoration: BoxDecoration(
+        color: AppColors.successTint,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.successBorder, width: 1.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.check_circle_rounded,
+                size: 18, color: AppColors.success),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Causa ante COSIE', style: AppTypography.hint),
+                const SizedBox(height: 2),
+                Text(
+                  causa,
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: onCambiar,
+            style: TextButton.styleFrom(foregroundColor: AppColors.guinda),
+            child: const Text('Cambiar'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Una línea de contexto al inicio de un paso.
+class _Intro extends StatelessWidget {
+  const _Intro({required this.titulo, required this.texto});
+
+  final String titulo;
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(titulo, style: AppTypography.displaySmall),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          texto,
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.inkSecondary,
+            height: 1.55,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Un adeudo dentro de la solicitud, sin salirse a la sección de Adeudos.
+class _FilaAdeudoCompacta extends StatelessWidget {
+  const _FilaAdeudoCompacta({required this.adeudo, required this.onQuitar});
+
+  final Adeudo adeudo;
+  final VoidCallback onQuitar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.sm + 2,
+          AppSpacing.xs,
+          AppSpacing.xxs,
+          AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.ground,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.border, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    adeudo.unidadAprendizaje,
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    '${adeudo.nivel} · reprobada en '
+                    '${adeudo.periodoReprobada} · ${adeudo.estado}',
+                    style: AppTypography.hint,
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: onQuitar,
+              tooltip: 'Quitar ${adeudo.unidadAprendizaje}',
+              icon: const Icon(Icons.close_rounded, size: 17),
+              color: AppColors.muted,
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -524,100 +893,6 @@ class _TarjetaHistorial extends StatelessWidget {
                   ],
                 ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Los tres contadores que salen solos de los adeudos del expediente.
-class _TarjetaDerivados extends StatelessWidget {
-  const _TarjetaDerivados({
-    required this.adeudadas,
-    required this.recursadas,
-    required this.acreditadasEts,
-    required this.adeudos,
-    required this.onCorregir,
-  });
-
-  final int adeudadas;
-  final int recursadas;
-  final int acreditadasEts;
-  final List<Adeudo> adeudos;
-  final VoidCallback onCorregir;
-
-  @override
-  Widget build(BuildContext context) {
-    return GescoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SeccionForm(
-            titulo: 'Esto sale de tus adeudos',
-            nota: 'No se teclea',
-          ),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              _Contador(numero: adeudadas, etiqueta: 'UAp adeudadas'),
-              _Contador(numero: recursadas, etiqueta: 'UAp recursadas'),
-              _Contador(
-                numero: acreditadasEts,
-                etiqueta: 'Acreditadas en E.T.S.',
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          if (adeudos.isEmpty)
-            Text(
-              'Tu expediente no registra adeudos. Si te falta capturar alguno, '
-              'hazlo en Adeudos: estos tres números salen de ahí.',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.inkSecondary,
-                height: 1.5,
-              ),
-            )
-          else
-            for (final a in adeudos)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 4),
-                      child: Icon(Icons.circle, size: 6, color: AppColors.muted),
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Expanded(
-                      child: Text(
-                        '${a.unidadAprendizaje} · ${a.nivel} · '
-                        'reprobada en ${a.periodoReprobada} · ${a.estado}',
-                        style: AppTypography.hint.copyWith(
-                          color: AppColors.inkSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          const SizedBox(height: AppSpacing.xs),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: onCorregir,
-              icon: const Icon(Icons.edit_outlined, size: 16),
-              label: const Text('Corregir mis adeudos'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.guinda,
-                textStyle: AppTypography.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -711,25 +986,18 @@ class _BarraPasos extends StatelessWidget {
     return Container(
       color: AppColors.surface,
       padding: EdgeInsets.symmetric(
-        horizontal: compacto ? AppSpacing.gutterMobile : AppSpacing.gutterDesktop,
+        horizontal:
+            compacto ? AppSpacing.gutterMobile : AppSpacing.gutterDesktop,
         vertical: AppSpacing.sm + 2,
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              for (final p in _Paso.values) ...[
-                if (p.index > 0) const SizedBox(width: AppSpacing.xs),
-                Expanded(
-                  child: _FilaPaso(
-                    paso: p,
-                    actual: actual,
-                    compacto: compacto,
-                  ),
-                ),
-              ],
-            ],
-          ),
+          for (final p in _Paso.values) ...[
+            if (p.index > 0) const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: _FilaPaso(paso: p, actual: actual, compacto: compacto),
+            ),
+          ],
         ],
       ),
     );
@@ -766,7 +1034,11 @@ class _FilaPaso extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Row(
           children: [
-            Icon(hecho ? Icons.check_rounded : paso.icono, size: 15, color: color),
+            Icon(
+              hecho ? Icons.check_rounded : paso.icono,
+              size: 15,
+              color: color,
+            ),
             const SizedBox(width: 5),
             if (!compacto)
               Flexible(

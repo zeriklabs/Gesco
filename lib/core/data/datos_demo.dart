@@ -27,6 +27,12 @@ abstract final class DatosDemo {
   static const ultimoNivel = 'NIVEL III';
   static const ultimoGrupo = '8CM1';
 
+  // Datos escolares que el dictamen usa para proponerle una causa al alumno.
+  // Los captura él mismo en el paso 4 del registro.
+  static const tipoCarga = 'POR DEBAJO DE LA MÍNIMA';
+  static const provieneDeBaja = false;
+  static const cuentaConDictamen = false;
+
   /// Unidades de aprendizaje reprobadas.
   ///
   /// Es lo único de carácter académico que GESCO sí tiene, porque lo captura

@@ -36,7 +36,7 @@ class _AdeudosScreenState extends State<AdeudosScreen> {
   List<Adeudo> get _adeudos => DatosDemo.adeudos;
 
   Future<void> _agregar() async {
-    final nuevo = await _pedirAdeudo(context);
+    final nuevo = await pedirAdeudo(context);
     if (nuevo == null) return;
     setState(() => DatosDemo.adeudos.add(nuevo));
   }
@@ -395,7 +395,10 @@ class _TarjetaCuentas extends StatelessWidget {
 
 /// Abre el formulario donde quepa mejor: hoja abajo en celular, diálogo
 /// centrado en escritorio. Devuelve el adeudo o `null` si se canceló.
-Future<Adeudo?> _pedirAdeudo(BuildContext context) {
+///
+/// Es público porque el dictamen también lo usa: ahí los adeudos se capturan
+/// sin salirse de la solicitud.
+Future<Adeudo?> pedirAdeudo(BuildContext context) {
   if (context.isCompact) {
     return showModalBottomSheet<Adeudo>(
       context: context,
