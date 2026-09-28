@@ -175,8 +175,10 @@ class _TarjetaTramite extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // El icono y la píldora comparten el primer renglón, y el título
+          // se queda con el ancho completo del segundo. Antes iban los tres
+          // en la misma fila y "Reinscripción" se partía a la mitad.
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 42,
@@ -187,28 +189,19 @@ class _TarjetaTramite extends StatelessWidget {
                 ),
                 child: Icon(tipo.icono, size: 20, color: AppColors.guinda),
               ),
-              const SizedBox(width: AppSpacing.sm + 1),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tipo.titulo,
-                      style: AppTypography.titleLarge.copyWith(fontSize: 17),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      tipo.descripcion,
-                      style: AppTypography.bodySmall.copyWith(fontSize: 12.5),
-                    ),
-                  ],
-                ),
-              ),
-              if (t != null) ...[
-                const SizedBox(width: AppSpacing.xs),
-                StatusPill(t.estado, compacta: true),
-              ],
+              const Spacer(),
+              if (t != null) StatusPill(t.estado, compacta: true),
             ],
+          ),
+          const SizedBox(height: AppSpacing.sm + 2),
+          Text(
+            tipo.titulo,
+            style: AppTypography.titleLarge.copyWith(fontSize: 17),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            tipo.descripcion,
+            style: AppTypography.bodySmall.copyWith(fontSize: 12.5, height: 1.4),
           ),
           const SizedBox(height: AppSpacing.sm + 2),
           _Requisito(

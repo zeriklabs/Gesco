@@ -167,7 +167,7 @@ abstract final class DatosDemo {
           estado: EstadoTramite.enRevision,
           periodo: periodoActual,
           creadoEl: DateTime(2026, 9, 22),
-          resumen: '4 unidades de aprendizaje · 30 créditos',
+          resumen: '4 materias · 30 créditos',
         ),
         Tramite(
           id: 'baja-26-2',
@@ -175,7 +175,7 @@ abstract final class DatosDemo {
           estado: EstadoTramite.aprobado,
           periodo: '26/2',
           creadoEl: DateTime(2026, 3, 14),
-          resumen: '1 unidad dada de baja',
+          resumen: '1 materia dada de baja',
         ),
       ];
 

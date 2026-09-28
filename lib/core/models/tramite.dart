@@ -14,8 +14,8 @@ enum TipoTramite {
     Icons.description_outlined,
   ),
   bajaUnidades(
-    'Baja de unidades',
-    'Dar de baja materias del periodo actual.',
+    'Baja de materias',
+    'Dar de baja materias del periodo que estás cursando.',
     Icons.playlist_remove_rounded,
   ),
   dictamen(
@@ -24,13 +24,13 @@ enum TipoTramite {
     Icons.gavel_rounded,
   ),
   bajaUnidadAcademica(
-    'Baja de unidad académica',
+    'Baja de la escuela',
     'Temporal o definitiva de la UPIIZ.',
     Icons.logout_rounded,
   ),
   ge01(
     'Formato GE-01',
-    'Inscripción de unidades de aprendizaje.',
+    'Inscripción de materias del periodo.',
     Icons.list_alt_rounded,
   );
 
