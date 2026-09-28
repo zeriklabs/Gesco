@@ -1,6 +1,7 @@
 import '../../widgets/status_pill.dart';
 import '../models/documento.dart';
 import '../models/expediente.dart';
+import '../models/materia.dart';
 import '../models/tramite.dart';
 
 /// Datos de ejemplo mientras no hay backend.
@@ -32,6 +33,53 @@ abstract final class DatosDemo {
   static const tipoCarga = 'POR DEBAJO DE LA MÍNIMA';
   static const provieneDeBaja = false;
   static const cuentaConDictamen = false;
+
+  /// Las materias del periodo actual.
+  ///
+  /// Salen del GE-01, que es donde el alumno las inscribe. Tenerlas aquí es
+  /// lo que permite que la baja de materias sea una lista con palomitas en
+  /// vez de dos listas que el alumno recaptura a mano.
+  static final materiasInscritas = <Materia>[
+    const Materia(
+      id: 'm-1',
+      nombre: 'Inteligencia Artificial Generativa',
+      nivel: 'NIVEL III',
+      creditos: 8,
+      grupo: '9CM1',
+    ),
+    const Materia(
+      id: 'm-2',
+      nombre: 'Procesamiento de Lenguaje Natural',
+      nivel: 'NIVEL III',
+      creditos: 8,
+      grupo: '9CM1',
+    ),
+    const Materia(
+      id: 'm-3',
+      nombre: 'Sistemas Inteligentes y Agentes Autónomos',
+      nivel: 'NIVEL III',
+      creditos: 8,
+      grupo: '9CM1',
+    ),
+    const Materia(
+      id: 'm-4',
+      nombre: 'Circuitos Eléctricos',
+      nivel: 'NIVEL I',
+      creditos: 6,
+      grupo: '3CM1',
+      estado: 'RECURSAMIENTO',
+    ),
+  ];
+
+  static int get creditosInscritos =>
+      materiasInscritas.fold(0, (suma, m) => suma + m.creditos);
+
+  /// El mínimo de créditos del periodo.
+  ///
+  /// TODO(gescolar): este número es inventado para poder enseñar el aviso.
+  /// El real lo tiene Gestión Escolar y cambia por programa académico; abajo
+  /// de él, el alumno necesita oficio de la dirección.
+  static const creditosMinimos = 24;
 
   /// Unidades de aprendizaje reprobadas.
   ///

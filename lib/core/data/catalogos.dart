@@ -111,6 +111,26 @@ abstract final class Catalogos {
     return lista;
   }
 
+  /// La documentación soporte de la baja de la escuela.
+  ///
+  /// En el sistema actual son **once preguntas de sí/no**: veintidós controles
+  /// para decir "ninguna". Aquí es una selección múltiple.
+  ///
+  /// TODO(gescolar): confirmar la lista contra el formato vigente.
+  static const motivosBajaEscuela = <String>[
+    'Cambio de domicilio',
+    'Enfermedad de un hijo',
+    'Enfermedad de los padres',
+    'Enfermedad de un familiar',
+    'Enfermedad propia',
+    'Enfermedad del cónyuge',
+    'Problemas económicos',
+    'Problemas familiares',
+    'Trabajo u horario incompatible',
+    'Oficio de aceptación de otra unidad o programa académico',
+    'Otro',
+  ];
+
   /// Por qué el alumno acude a la Comisión de Situación Escolar.
   ///
   /// TODO(gescolar): el catálogo real está en el desplegable de la solicitud de

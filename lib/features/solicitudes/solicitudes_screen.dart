@@ -9,7 +9,10 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/gesco_card.dart';
 import '../../widgets/status_pill.dart';
+import 'baja_escuela_screen.dart';
+import 'baja_materias_screen.dart';
 import 'dictamen_screen.dart';
+import 'ge01_screen.dart';
 import 'reinscripcion_screen.dart';
 
 /// El catálogo de trámites.
@@ -130,18 +133,15 @@ class SolicitudesScreen extends StatelessWidget {
   }
 
   void _abrir(BuildContext context, TipoTramite tipo) {
-    final pantalla = switch (tipo) {
+    // Los cinco trámites ya tienen pantalla; el switch es exhaustivo y el
+    // compilador avisa si algún día se agrega un tipo nuevo sin la suya.
+    final Widget pantalla = switch (tipo) {
       TipoTramite.reinscripcion => const ReinscripcionScreen(),
       TipoTramite.dictamen => const DictamenScreen(),
-      _ => null,
+      TipoTramite.bajaUnidades => const BajaMateriasScreen(),
+      TipoTramite.bajaUnidadAcademica => const BajaEscuelaScreen(),
+      TipoTramite.ge01 => const Ge01Screen(),
     };
-
-    if (pantalla == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${tipo.titulo}: pantalla en construcción')),
-      );
-      return;
-    }
 
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => pantalla),
