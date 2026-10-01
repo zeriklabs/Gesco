@@ -6,9 +6,13 @@ import '../models/tramite.dart';
 
 /// Datos de ejemplo mientras no hay backend.
 ///
-/// TODO(backend): esto desaparece cuando exista la API. Todo lo que hay aquí
-/// es inventado para poder ver las pantallas llenas; ningún dato sale de un
-/// alumno real.
+/// TODO(backend): esto desaparece cuando exista la API.
+///
+/// **Todo lo que hay aquí es inventado.** Ni el nombre, ni la boleta, ni el
+/// domicilio, ni las materias salen de una persona real, y así tiene que
+/// seguir: este repo es público y una boleta es un dato que identifica a
+/// alguien. Si necesitas probar con tus datos, hazlo en local y no lo
+/// commitees.
 ///
 /// Está en un solo archivo a propósito: cuando llegue el servidor, se cambia
 /// el origen en un lugar y las pantallas no se enteran.
@@ -16,8 +20,8 @@ abstract final class DatosDemo {
   static const periodoActual = '27/1';
   static const periodoLegible = 'Ago 2026 – Ene 2027';
 
-  static const nombreAlumno = 'Gael García';
-  static const boleta = '2023670029';
+  static const nombreAlumno = 'Ana Martínez';
+  static const boleta = '2023670000';
   static const carrera = 'Ing. en Sistemas Computacionales';
   static const grupo = '8CM1';
 
@@ -43,7 +47,7 @@ abstract final class DatosDemo {
   ///
   /// TODO(backend): inventados. Ninguno sale de una persona real.
   static final datosDeContacto = <String, String>{
-    'Domicilio': 'Av. Hidalgo 118, Centro, Ojocaliente, Zacatecas, 98700',
+    'Domicilio': 'Av. Siempre Viva 100, Centro, Zacatecas, Zacatecas, 98000',
     'Teléfono celular': '492 100 2030',
     'Teléfono fijo': '492 955 1010',
     'Correo': 'alumno@alumno.ipn.mx',
@@ -58,31 +62,31 @@ abstract final class DatosDemo {
   static final materiasInscritas = <Materia>[
     const Materia(
       id: 'm-1',
-      nombre: 'Inteligencia Artificial Generativa',
+      nombre: 'Bases de Datos Avanzadas',
       nivel: 'NIVEL III',
       creditos: 8,
-      grupo: '9CM1',
+      grupo: '8CM1',
     ),
     const Materia(
       id: 'm-2',
-      nombre: 'Procesamiento de Lenguaje Natural',
+      nombre: 'Ingeniería de Software',
       nivel: 'NIVEL III',
       creditos: 8,
-      grupo: '9CM1',
+      grupo: '8CM1',
     ),
     const Materia(
       id: 'm-3',
-      nombre: 'Sistemas Inteligentes y Agentes Autónomos',
+      nombre: 'Redes de Computadoras',
       nivel: 'NIVEL III',
       creditos: 8,
-      grupo: '9CM1',
+      grupo: '8CM1',
     ),
     const Materia(
       id: 'm-4',
-      nombre: 'Circuitos Eléctricos',
+      nombre: 'Métodos Numéricos',
       nivel: 'NIVEL I',
       creditos: 6,
-      grupo: '3CM1',
+      grupo: '4CM1',
       estado: 'RECURSAMIENTO',
     ),
   ];
@@ -137,15 +141,15 @@ abstract final class DatosDemo {
             camposLlenos: 21,
             total: 21,
             lineas: [
-              ('Nombre', 'Gael García Torres'),
-              ('Domicilio', 'Ojocaliente, Zacatecas'),
+              ('Nombre', 'Ana Martínez Reyes'),
+              ('Domicilio', 'Zacatecas, Zacatecas'),
             ],
           ),
           SeccionExpediente.tutor: ResumenSeccion(
             camposLlenos: 14,
             total: 14,
             lineas: [
-              ('Tutor', 'Maricela Torres'),
+              ('Tutor', 'Rosa Reyes Luna'),
               ('Parentesco', 'Madre · Maestra'),
               ('Domicilio', 'Mismo que el alumno'),
             ],

@@ -38,7 +38,7 @@ class _PasoCuentaState extends State<PasoCuenta> {
           GescoTextField(
             label: 'Boleta o preboleta',
             controller: d.boleta,
-            hintText: '2023670029',
+            hintText: '2023670000',
             helperText: 'Si eres de nuevo ingreso usa tu preboleta con guion: '
                 'PE-12345678.',
             isRequired: true,

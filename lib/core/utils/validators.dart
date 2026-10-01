@@ -8,7 +8,7 @@ import 'curp.dart';
 /// Los mensajes se escriben en segunda persona y dicen **qué hacer**, no solo
 /// qué está mal: "Son 10 dígitos" sirve, "Formato inválido" no.
 abstract final class Validators {
-  /// Boleta de 10 dígitos: 2023670029.
+  /// Boleta de 10 dígitos: 2023670000.
   static final _boleta = RegExp(r'^\d{10}$');
 
   /// Preboleta de nuevo ingreso: PE-12345678 (11 caracteres con el guion).

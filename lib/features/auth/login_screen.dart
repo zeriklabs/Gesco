@@ -71,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Text('Si ya estás inscrito', style: AppTypography.label),
             const SizedBox(height: AppSpacing.xxs),
             Text(
-              'Usa tu boleta definitiva, los 10 dígitos. Por ejemplo: 2023670029.',
+              'Usa tu boleta definitiva, los 10 dígitos. Por ejemplo: 2023670000.',
               style: AppTypography.bodyMedium.copyWith(color: AppColors.muted),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -248,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
             GescoTextField(
               label: 'Boleta o preboleta',
               controller: _boleta,
-              hintText: '2023670029',
+              hintText: '2023670000',
               helperText: 'De nuevo ingreso: usa tu preboleta, '
                   'con guion incluido (PE-12345678).',
               isRequired: true,

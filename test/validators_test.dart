@@ -4,7 +4,7 @@ import 'package:gesco/core/utils/validators.dart';
 void main() {
   group('Validators.boleta', () {
     test('acepta una boleta de 10 dígitos', () {
-      expect(Validators.boleta('2023670029'), isNull);
+      expect(Validators.boleta('2023670000'), isNull);
     });
 
     test('acepta preboleta de nuevo ingreso', () {
@@ -30,12 +30,12 @@ void main() {
 
     test('normalizarBoleta agrega el guion y sube a mayúsculas', () {
       expect(Validators.normalizarBoleta('pe12345678'), 'PE-12345678');
-      expect(Validators.normalizarBoleta(' 2023670029 '), '2023670029');
+      expect(Validators.normalizarBoleta(' 2023670000 '), '2023670000');
     });
 
     test('esPreboleta distingue los dos casos', () {
       expect(Validators.esPreboleta('PE-12345678'), isTrue);
-      expect(Validators.esPreboleta('2023670029'), isFalse);
+      expect(Validators.esPreboleta('2023670000'), isFalse);
     });
   });
 
