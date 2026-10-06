@@ -123,27 +123,20 @@ class CabeceraPantalla extends StatelessWidget {
 
     if (acciones.isEmpty) return texto;
 
-    // En celular las acciones bajan; en escritorio van al lado del título.
-    if (compacto) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          texto,
-          const SizedBox(height: AppSpacing.md),
-          Wrap(spacing: AppSpacing.xs, runSpacing: AppSpacing.xs, children: acciones),
-        ],
-      );
-    }
-
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(child: texto),
-        const SizedBox(width: AppSpacing.md),
-        for (var i = 0; i < acciones.length; i++) ...[
-          if (i > 0) const SizedBox(width: AppSpacing.sm),
-          acciones[i],
-        ],
+        const SizedBox(width: AppSpacing.sm),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < acciones.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppSpacing.xs),
+              acciones[i],
+            ],
+          ],
+        ),
       ],
     );
   }

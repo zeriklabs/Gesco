@@ -16,6 +16,7 @@ class BrandMark extends StatelessWidget {
     this.logoHeight = 34,
     this.mostrarNombre = true,
     this.subtitulo = 'UPIIZ',
+    this.fontSizeGesco,
   });
 
   /// `true` sobre guinda, `false` sobre fondo claro.
@@ -23,9 +24,13 @@ class BrandMark extends StatelessWidget {
   final double logoHeight;
   final bool mostrarNombre;
   final String subtitulo;
+  final double? fontSizeGesco;
 
   @override
   Widget build(BuildContext context) {
+    final gescoSize = fontSizeGesco ?? (logoHeight * 0.56).clamp(16.0, 32.0);
+    final subtituloSize = (gescoSize * 0.48).clamp(9.0, 14.0);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -33,8 +38,8 @@ class BrandMark extends StatelessWidget {
         if (mostrarNombre) ...[
           const SizedBox(width: AppSpacing.sm),
           Container(
-            width: 1,
-            height: logoHeight * 0.7,
+            width: 1.2,
+            height: logoHeight * 0.72,
             color: onDark ? AppColors.overlayBorderOnGuinda : AppColors.border,
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -45,9 +50,10 @@ class BrandMark extends StatelessWidget {
               Text(
                 'GESCO',
                 style: AppTypography.titleLarge.copyWith(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
+                  fontSize: gescoSize,
+                  fontWeight: FontWeight.w900,
                   height: 1,
+                  letterSpacing: 0.5,
                   color: onDark ? AppColors.onGuinda : AppColors.ink,
                 ),
               ),
@@ -55,7 +61,9 @@ class BrandMark extends StatelessWidget {
               Text(
                 subtitulo.toUpperCase(),
                 style: AppTypography.overline.copyWith(
-                  fontSize: 10,
+                  fontSize: subtituloSize,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
                   color: onDark ? AppColors.dorado : AppColors.muted,
                 ),
               ),

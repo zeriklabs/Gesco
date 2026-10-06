@@ -52,7 +52,7 @@ class GescoSelect<T> extends StatelessWidget {
             children: [
               if (isRequired)
                 const TextSpan(
-                  text: ' *',
+                  text: '\u00A0*',
                   style: TextStyle(color: AppColors.guinda),
                 ),
             ],

@@ -102,28 +102,38 @@ class _GescoTextFieldState extends State<GescoTextField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Flexible(
-              child: Text.rich(
-                TextSpan(
-                  text: widget.label,
-                  style: AppTypography.label,
-                  children: [
-                    if (widget.isRequired)
-                      const TextSpan(
-                        text: ' *',
-                        style: TextStyle(color: AppColors.guinda),
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text.rich(
+                      TextSpan(
+                        text: widget.label,
+                        style: AppTypography.label,
+                        children: [
+                          if (widget.isRequired)
+                            const TextSpan(
+                              text: '\u00A0*',
+                              style: TextStyle(color: AppColors.guinda),
+                            ),
+                        ],
                       ),
+                    ),
+                  ),
+                  if (widget.derivado) ...[
+                    const SizedBox(width: AppSpacing.xs),
+                    const _EtiquetaAutomatico(),
                   ],
-                ),
+                ],
               ),
             ),
-            if (widget.derivado) ...[
+            if (widget.trailingAction != null) ...[
               const SizedBox(width: AppSpacing.xs),
-              const _EtiquetaAutomatico(),
+              widget.trailingAction!,
             ],
-            const Spacer(),
-            if (widget.trailingAction != null) widget.trailingAction!,
           ],
         ),
         const SizedBox(height: AppSpacing.xs),

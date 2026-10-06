@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/layout/breakpoints.dart';
 import '../core/layout/secciones.dart';
 import '../core/models/documento.dart';
 import '../core/models/tramite.dart';
@@ -9,7 +10,8 @@ import '../core/theme/app_typography.dart';
 
 /// Un botón con campana e indicador de notificaciones pendientes.
 ///
-/// Al presionar despliega un menú flotante justo debajo del botón con los avisos.
+/// En escritorio despliega un menú flotante justo debajo del botón.
+/// En dispositivos móviles abre una pantalla completa dedicada (`NotificacionesScreen`).
 class BotonNotificaciones extends StatefulWidget {
   const BotonNotificaciones({
     super.key,
@@ -64,6 +66,62 @@ class _BotonNotificacionesState extends State<BotonNotificaciones>
   Widget build(BuildContext context) {
     _initAnimations(); // Garantizar que exista durante Hot Reload
     final tieneNotificaciones = widget.bloqueo != null;
+    final esMovil = context.isCompact;
+
+    final boton = Badge(
+      isLabelVisible: tieneNotificaciones,
+      label: const Text('1'),
+      backgroundColor: AppColors.guinda,
+      textColor: AppColors.onGuinda,
+      alignment: const Alignment(0.6, -0.6),
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: InkWell(
+          onTap: () {
+            if (esMovil) {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => NotificacionesScreen(
+                    bloqueo: widget.bloqueo,
+                    onIr: widget.onIr,
+                  ),
+                  settings: const RouteSettings(name: '/notificaciones'),
+                ),
+              );
+            } else {
+              if (_controller.isOpen) {
+                _animController!.reverse().then((_) => _controller.close());
+              } else {
+                _controller.open();
+                _animController!.forward(from: 0.0);
+              }
+            }
+          },
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.borderSubtle),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(
+              tieneNotificaciones
+                  ? Icons.notifications_active_rounded
+                  : Icons.notifications_outlined,
+              size: 22,
+              color: tieneNotificaciones
+                  ? AppColors.guinda
+                  : AppColors.inkSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (esMovil) {
+      return boton;
+    }
 
     return MenuAnchor(
       controller: _controller,
@@ -78,48 +136,9 @@ class _BotonNotificacionesState extends State<BotonNotificaciones>
             side: const BorderSide(color: AppColors.borderSubtle, width: 1.5),
           ),
         ),
-        shadowColor: WidgetStateProperty.all(Colors.black.withOpacity(0.08)),
+        shadowColor: WidgetStateProperty.all(Colors.black.withValues(alpha: 0.08)),
       ),
-      builder: (context, controller, child) {
-        return Badge(
-          isLabelVisible: tieneNotificaciones,
-          label: const Text('1'),
-          backgroundColor: AppColors.guinda,
-          textColor: AppColors.onGuinda,
-          alignment: const Alignment(0.6, -0.6),
-          child: Material(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: InkWell(
-              onTap: () {
-                if (controller.isOpen) {
-                  _animController!.reverse().then((_) => controller.close());
-                } else {
-                  controller.open();
-                  _animController!.forward(from: 0.0);
-                }
-              },
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.borderSubtle),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Icon(
-                  tieneNotificaciones
-                      ? Icons.notifications_active_rounded
-                      : Icons.notifications_outlined,
-                  size: 22,
-                  color: tieneNotificaciones
-                      ? AppColors.guinda
-                      : AppColors.inkSecondary,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+      builder: (context, controller, child) => boton,
       menuChildren: [
         AnimatedBuilder(
           animation: _animController!,
@@ -153,6 +172,129 @@ class _BotonNotificacionesState extends State<BotonNotificaciones>
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Pantalla completa de notificaciones exclusiva para dispositivos móviles.
+class NotificacionesScreen extends StatelessWidget {
+  const NotificacionesScreen({
+    super.key,
+    required this.bloqueo,
+    required this.onIr,
+  });
+
+  final (Tramite, Documento)? bloqueo;
+  final ValueChanged<Seccion> onIr;
+
+  @override
+  Widget build(BuildContext context) {
+    final tieneAviso = bloqueo != null;
+
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.ink),
+          tooltip: 'Regresar',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                'Notificaciones',
+                style: AppTypography.titleLarge.copyWith(fontSize: 18),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (tieneAviso) ...[
+              const SizedBox(width: AppSpacing.xs),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.dangerTint,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(color: AppColors.dangerBorder),
+                ),
+                child: Text(
+                  'Pendientes: 1',
+                  style: AppTypography.hint.copyWith(
+                    color: AppColors.guinda,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.gutterMobile),
+          children: [
+            if (!tieneAviso)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: const BoxDecoration(
+                          color: AppColors.ground,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.notifications_off_outlined,
+                          size: 34,
+                          color: AppColors.muted,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'Sin notificaciones pendientes',
+                        style: AppTypography.titleLarge.copyWith(
+                          fontSize: 17,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(
+                        'Te avisaremos por aquí cuando haya observaciones en tus documentos o trámites.',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.muted,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              _TarjetaAvisoNotificacion(
+                tramite: bloqueo!.$1,
+                documento: bloqueo!.$2,
+                onIr: (sec) {
+                  Navigator.of(context).pop();
+                  onIr(sec);
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -198,7 +340,7 @@ class _NotificacionesMenuContenido extends StatelessWidget {
                       border: Border.all(color: AppColors.dangerBorder),
                     ),
                     child: Text(
-                      '1 pendiente',
+                      'Pendientes: 1',
                       style: AppTypography.hint.copyWith(
                         color: AppColors.guinda,
                         fontWeight: FontWeight.w700,

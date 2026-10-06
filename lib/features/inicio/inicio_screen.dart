@@ -37,17 +37,23 @@ class InicioScreen extends StatelessWidget {
         compacto ? AppSpacing.gutterMobile : AppSpacing.gutterDesktop,
       ),
       children: [
-        CabeceraPantalla(
-          contexto: 'Boleta ${DatosDemo.boleta} · ${DatosDemo.carrera} · '
-              '${DatosDemo.grupo}',
-          titulo: 'Hola, ${DatosDemo.nombreAlumno.split(' ').first}',
-          acciones: [
-            BotonNotificaciones(
-              bloqueo: bloqueado,
-              onIr: onIr,
-            ),
-          ],
-        ),
+        if (compacto)
+          _PerfilHeaderCard(
+            bloqueo: bloqueado,
+            onIr: onIr,
+          )
+        else
+          CabeceraPantalla(
+            contexto: 'Boleta ${DatosDemo.boleta} · ${DatosDemo.carrera} · '
+                '${DatosDemo.grupo}',
+            titulo: 'Hola, ${DatosDemo.nombreAlumno.split(' ').first}',
+            acciones: [
+              BotonNotificaciones(
+                bloqueo: bloqueado,
+                onIr: onIr,
+              ),
+            ],
+          ),
         const SizedBox(height: AppSpacing.lg),
 
         _TarjetaExpediente(expediente: expediente, onIr: onIr),
@@ -88,7 +94,91 @@ class InicioScreen extends StatelessWidget {
   }
 }
 
+/// Tarjeta de perfil del alumno para la vista móvil con botón de cierre de sesión.
+class _PerfilHeaderCard extends StatelessWidget {
+  const _PerfilHeaderCard({
+    required this.bloqueo,
+    required this.onIr,
+  });
 
+  final (Tramite, Documento)? bloqueo;
+  final IrASeccion onIr;
+
+  @override
+  Widget build(BuildContext context) {
+    return GescoCard(
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.guinda,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.guinda.withValues(alpha: 0.15),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              DatosDemo.iniciales,
+              style: AppTypography.titleLarge.copyWith(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.onGuinda,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm + 2),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  DatosDemo.nombreAlumno,
+                  style: AppTypography.titleLarge.copyWith(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Boleta ${DatosDemo.boleta} · ${DatosDemo.grupo}',
+                  style: AppTypography.bodySmall.copyWith(
+                    fontSize: 12.5,
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  DatosDemo.carrera,
+                  style: AppTypography.hint.copyWith(
+                    fontSize: 11.5,
+                    color: AppColors.inkSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          BotonNotificaciones(
+            bloqueo: bloqueo,
+            onIr: onIr,
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// La tarjeta guinda con el estado del expediente y sus cuatro pasos.
 class _TarjetaExpediente extends StatelessWidget {
@@ -150,18 +240,21 @@ class _TarjetaExpediente extends StatelessWidget {
           : Row(
               children: [
                 encabezado,
-                const SizedBox(width: AppSpacing.xl),
+                const SizedBox(width: AppSpacing.lg),
                 Container(
                   width: 1,
-                  height: 46,
+                  height: 36,
                   color: AppColors.overlayBorderOnGuinda,
                 ),
                 const SizedBox(width: AppSpacing.md),
-                for (final chip in chips) ...[
-                  Expanded(child: chip),
-                  const SizedBox(width: AppSpacing.xs),
-                ],
-                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Wrap(
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
+                    children: chips,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
                 Text(
                   'Revisar →',
                   style: AppTypography.bodyMedium.copyWith(
@@ -185,8 +278,8 @@ class _ChipPaso extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm + 2,
-        vertical: AppSpacing.sm - 1,
+        horizontal: AppSpacing.xs + 2,
+        vertical: AppSpacing.xs - 1,
       ),
       decoration: BoxDecoration(
         color: AppColors.overlayOnGuinda,
@@ -197,23 +290,25 @@ class _ChipPaso extends StatelessWidget {
         children: [
           Icon(
             completa ? Icons.check_rounded : Icons.remove_rounded,
-            size: 16,
+            size: 15,
             color: completa
                 ? AppColors.successOnGuinda
                 : AppColors.onGuindaFaint,
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: AppSpacing.xxs + 2),
           Flexible(
             child: Text(
               seccion.titulo.replaceFirst('Datos ', ''),
               style: AppTypography.bodyMedium.copyWith(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 color: completa
                     ? AppColors.onGuinda
                     : AppColors.onGuindaMuted,
               ),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              softWrap: false,
             ),
           ),
         ],

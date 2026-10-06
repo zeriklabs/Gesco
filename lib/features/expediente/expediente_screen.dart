@@ -166,6 +166,28 @@ class _InsigniaAvance extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final completo = expediente.estaCompleto;
+    final compacto = context.isCompact;
+
+    if (compacto) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StatusPill(
+            completo ? EstadoTramite.aprobado : EstadoTramite.enRevision,
+            compacta: true,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            '${expediente.seccionesCompletas} de ${expediente.totalSecciones} secciones',
+            style: AppTypography.hint.copyWith(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      );
+    }
 
     return Row(
       mainAxisSize: MainAxisSize.min,

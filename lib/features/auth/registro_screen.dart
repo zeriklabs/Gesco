@@ -113,7 +113,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
   void _terminar() {
     // TODO(backend): aquí se manda el alta completa.
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(
+        builder: (_) => const HomeScreen(),
+        settings: const RouteSettings(name: '/home'),
+      ),
       (_) => false,
     );
   }

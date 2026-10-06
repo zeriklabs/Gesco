@@ -49,13 +49,19 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _cargando = false);
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(
+        builder: (_) => const HomeScreen(),
+        settings: const RouteSettings(name: '/home'),
+      ),
     );
   }
 
   void _irARegistro() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const RegistroScreen()),
+      MaterialPageRoute(
+        builder: (_) => const RegistroScreen(),
+        settings: const RouteSettings(name: '/registro'),
+      ),
     );
   }
 
@@ -107,8 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _construirEscritorio() {
     return Row(
       children: [
-        // Proporción, no ancho fijo: con 600 px duros el formulario se quedaba
-        // sin espacio en ventanas de ~1100 y las filas se desbordaban.
         const Expanded(flex: 5, child: _PanelMarca()),
         Expanded(
           flex: 6,
@@ -116,24 +120,6 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.all(AppSpacing.xxl + AppSpacing.xs),
             child: Column(
               children: [
-                // Wrap, no Row: si no cabe en una línea, baja el botón en vez
-                // de desbordarse.
-                Wrap(
-                  alignment: WrapAlignment.end,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      '¿Eres del departamento?',
-                      style: AppTypography.bodyMedium
-                          .copyWith(color: AppColors.muted),
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text('Acceso administrativo'),
-                    ),
-                  ],
-                ),
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
@@ -157,41 +143,47 @@ class _LoginScreenState extends State<LoginScreen> {
   // --- Celular -------------------------------------------------------------
 
   Widget _construirCelular() {
-    return Container(
-      color: AppColors.guinda,
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Container(
+        color: AppColors.guinda,
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.gutterMobile,
                 AppSpacing.md,
                 AppSpacing.gutterMobile,
-                AppSpacing.xl,
+                AppSpacing.md,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const BrandMark(logoHeight: 32),
-                  const SizedBox(height: AppSpacing.xxl),
-                  Text(
-                    'Tus trámites,\nsin dar ',
-                    style: AppTypography.displayMedium.copyWith(
-                      fontSize: 36,
-                      color: AppColors.onGuinda,
-                      height: 1,
-                    ),
+                  const BrandMark(
+                    logoHeight: 46,
+                    subtitulo: 'UPIIZ · Zacatecas',
                   ),
-                  Transform.translate(
-                    offset: const Offset(0, -6),
-                    child: Text(
-                      'vueltas.',
-                      style: AppTypography.displayMedium.copyWith(
-                        fontSize: 36,
-                        color: AppColors.dorado,
-                        height: 1,
-                      ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text.rich(
+                    TextSpan(
+                      text: 'Tus trámites, sin dar ',
+                      children: [
+                        TextSpan(
+                          text: 'vueltas.',
+                          style: TextStyle(
+                            color: AppColors.dorado,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                    style: AppTypography.displayMedium.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onGuinda,
+                      height: 1.15,
                     ),
                   ),
                 ],
@@ -203,13 +195,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: const BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(AppRadius.sheet + 2),
+                    top: Radius.circular(AppRadius.sheet),
                   ),
                 ),
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.gutterMobile,
-                    AppSpacing.xl,
+                    AppSpacing.md,
                     AppSpacing.gutterMobile,
                     AppSpacing.xl,
                   ),
@@ -220,8 +212,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // --- Compartido ----------------------------------------------------------
 
@@ -231,26 +224,24 @@ class _LoginScreenState extends State<LoginScreen> {
       child: AutofillGroup(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'Iniciar sesión',
               style: compacto
-                  ? AppTypography.displayMedium
+                  ? AppTypography.displayMedium.copyWith(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                    )
                   : AppTypography.displayLarge.copyWith(fontSize: 42),
             ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Con tu boleta del IPN.',
-              style: AppTypography.bodyLarge.copyWith(color: AppColors.muted),
-            ),
-            const SizedBox(height: AppSpacing.xxl),
+            SizedBox(height: compacto ? AppSpacing.md : AppSpacing.xxl),
 
             GescoTextField(
               label: 'Boleta o preboleta',
               controller: _boleta,
               hintText: '2023670000',
-              helperText: 'De nuevo ingreso: usa tu preboleta, '
-                  'con guion incluido (PE-12345678).',
+              helperText: 'De nuevo ingreso: usa tu preboleta, con guion (PE-12345678).',
               isRequired: true,
               textCapitalization: TextCapitalization.characters,
               inputFormatters: [
@@ -262,11 +253,11 @@ class _LoginScreenState extends State<LoginScreen> {
               validator: Validators.boleta,
               trailingAction: TextButton.icon(
                 onPressed: _explicarBoleta,
-                icon: const Icon(Icons.help_outline_rounded, size: 16),
+                icon: const Icon(Icons.help_outline_rounded, size: 15),
                 label: const Text('¿Cuál es la mía?'),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  minimumSize: const Size(0, 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  minimumSize: const Size(0, 28),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textStyle: AppTypography.hint.copyWith(
                     fontWeight: FontWeight.w700,
@@ -274,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: compacto ? AppSpacing.md : AppSpacing.lg),
 
             GescoPasswordField(
               label: 'Contraseña',
@@ -286,10 +277,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ? 'Escribe tu contraseña'
                   : null,
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.xs),
 
-            // Sin Spacer: el Spacer se come todo el ancho disponible y empuja
-            // al botón fuera cuando el espacio es justo.
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -309,20 +298,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       Text(
                         'Mantener sesión',
-                        style: AppTypography.bodyMedium
-                            .copyWith(fontWeight: FontWeight.w600),
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: compacto ? 13 : 14,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 TextButton(
                   onPressed: () {},
-                  style: TextButton.styleFrom(foregroundColor: AppColors.muted),
-                  child: const Text('Olvidé mi contraseña'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.muted,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                  ),
+                  child: Text(
+                    'Olvidé mi contraseña',
+                    style: TextStyle(fontSize: compacto ? 13 : 14),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: compacto ? AppSpacing.sm : AppSpacing.md),
 
             SizedBox(
               width: double.infinity,
@@ -347,7 +344,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
               ),
             ),
-            const SizedBox(height: AppSpacing.xxl),
+            SizedBox(height: compacto ? AppSpacing.md : AppSpacing.xxl),
 
             _TarjetaCrearCuenta(onPressed: _irARegistro, compacta: compacto),
           ],
@@ -365,8 +362,6 @@ class _PanelMarca extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.guinda,
-      // Scroll de seguridad: en una laptop de pantalla corta este panel no
-      // cabe de alto, y sin esto se desborda por abajo.
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -514,67 +509,56 @@ class _TarjetaCrearCuenta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final texto = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          '¿Primera vez en GESCO?',
-          style: AppTypography.bodyLarge.copyWith(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          'Creas tu cuenta y llenas tus datos en un solo paso guiado.',
-          style: AppTypography.bodySmall.copyWith(fontSize: 13),
-        ),
-      ],
-    );
-
-    final boton = OutlinedButton(
-      onPressed: onPressed,
-      child: const Text('Crear cuenta'),
-    );
-
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: EdgeInsets.all(compacta ? AppSpacing.md : AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.ground,
         borderRadius: BorderRadius.circular(AppRadius.lg + 2),
         border: Border.all(color: AppColors.borderSubtle, width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: AppColors.ink.withOpacity(0.02),
+            color: AppColors.ink.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      // No basta con mirar si estamos en celular: en escritorio esta tarjeta
-      // también se queda sin ancho. Decide con el espacio real que le tocó.
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final cabeEnUnaFila = !compacta && constraints.maxWidth >= 400;
-          if (cabeEnUnaFila) {
-            return Row(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(child: texto),
-                const SizedBox(width: AppSpacing.md),
-                boton,
+                Text(
+                  '¿Primera vez en GESCO?',
+                  style: AppTypography.bodyLarge.copyWith(
+                    fontSize: compacta ? 13.5 : 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Creas tu cuenta y llenas tus datos en un solo paso guiado.',
+                  style: AppTypography.bodySmall.copyWith(
+                    fontSize: compacta ? 12 : 13,
+                  ),
+                ),
               ],
-            );
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              texto,
-              const SizedBox(height: AppSpacing.sm),
-              boton,
-            ],
-          );
-        },
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          OutlinedButton(
+            onPressed: onPressed,
+            style: compacta
+                ? OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                  )
+                : null,
+            child: const Text('Crear cuenta'),
+          ),
+        ],
       ),
     );
   }

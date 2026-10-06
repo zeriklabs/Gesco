@@ -7,7 +7,6 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/brand_mark.dart';
-import '../adeudos/adeudos_screen.dart';
 import '../auth/login_screen.dart';
 import '../expediente/expediente_screen.dart';
 import '../inicio/inicio_screen.dart';
@@ -35,7 +34,6 @@ class _HomeScreenState extends State<HomeScreen> {
     Seccion.inicio => InicioScreen(onIr: _ir),
     Seccion.expediente => ExpedienteScreen(onIr: _ir),
     Seccion.solicitudes => SolicitudesScreen(onIr: _ir),
-    Seccion.adeudos => AdeudosScreen(onIr: _ir),
   };
 
   @override
@@ -388,7 +386,13 @@ class _BarraInferior extends StatelessWidget {
   Widget build(BuildContext context) {
     return NavigationBar(
       selectedIndex: actual.index,
-      onDestinationSelected: (i) => onSeleccionar(Seccion.values[i]),
+      onDestinationSelected: (i) {
+        if (i < Seccion.values.length) {
+          onSeleccionar(Seccion.values[i]);
+        } else {
+          cerrarSesion(context);
+        }
+      },
       backgroundColor: AppColors.surface,
       surfaceTintColor: Colors.transparent,
       indicatorColor: AppColors.dangerTint,
@@ -402,6 +406,12 @@ class _BarraInferior extends StatelessWidget {
             label: seccion.tituloCorto,
             tooltip: seccion.titulo,
           ),
+        const NavigationDestination(
+          icon: Icon(Icons.logout_rounded, color: AppColors.placeholder),
+          selectedIcon: Icon(Icons.logout_rounded, color: AppColors.guinda),
+          label: 'Salir',
+          tooltip: 'Cerrar sesión',
+        ),
       ],
     );
   }

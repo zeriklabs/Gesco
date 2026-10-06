@@ -34,15 +34,15 @@ abstract final class AppTheme {
       splashFactory: InkSparkle.splashFactory,
 
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.guinda,
-        foregroundColor: AppColors.onGuinda,
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.ink,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: AppTypography.displaySmall.copyWith(
-          color: AppColors.onGuinda,
+          color: AppColors.ink,
         ),
-        systemOverlayStyle: SystemUiOverlayStyle.light,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
 
       // --- Campos de texto ---------------------------------------------------
