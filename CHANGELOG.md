@@ -5,6 +5,7 @@ Todas las modificaciones notables de la aplicación GESCO (Sistema Integral de G
 ## [0.0.2 Alpha] - 2025-02-23
 
 ### 🚀 Nuevas Funcionalidades
+- **Barra de Navegación Lateral Desplegable y Reactiva al Cursor (Hover-Reactive Sidebar):** En pantallas de escritorio, el menú lateral cuenta con un diseño inteligente que se expande suavemente al pasar el cursor (*hover*) y se contrae al retirarlo, optimizando el espacio de trabajo con transiciones fluidas.
 - **Paso de Fotografía del Estudiante (`PasoFoto`):** Se integró un paso dedicado en el asistente de registro para subir o capturar la fotografía oficial del alumno, incluyendo vista previa circular, opciones de cámara/archivo y los requisitos oficiales del IPN.
 - **Respaldo Dinámico para Municipios de Nacimiento:** En el registro de datos personales, al detectar el estado de nacimiento mediante el CURP, se despliega automáticamente el catálogo oficial de municipios de Zacatecas, o se habilita un campo de texto libre para cualquier otra entidad federativa.
 - **RFC Autocompletado y Editable:** El RFC se rellena de forma automática a partir del CURP ingresado, pero se mantiene completamente editable por el usuario.
