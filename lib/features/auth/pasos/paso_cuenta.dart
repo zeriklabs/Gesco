@@ -39,7 +39,8 @@ class _PasoCuentaState extends State<PasoCuenta> {
             label: 'Boleta o preboleta',
             controller: d.boleta,
             hintText: '2023670000',
-            helperText: 'Si eres de nuevo ingreso usa tu preboleta con guion: '
+            helperText:
+                'Si eres de nuevo ingreso usa tu preboleta con guion: '
                 'PE-12345678.',
             isRequired: true,
             textCapitalization: TextCapitalization.characters,
@@ -69,16 +70,24 @@ class _PasoCuentaState extends State<PasoCuenta> {
             validator: Validators.contrasena,
             onChanged: (_) => setState(() {}),
           ),
+          const SizedBox(height: AppSpacing.sm),
+          ReglasContrasena(valor: d.password.text),
           const SizedBox(height: AppSpacing.lg),
 
           GescoPasswordField(
             label: 'Confirmar contraseña',
             controller: d.passwordConfirmar,
-            validator: (v) => Validators.confirmarContrasena(v, d.password.text),
+            validator: (v) =>
+                Validators.confirmarContrasena(v, d.password.text),
+            onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: AppSpacing.md),
-
-          ReglasContrasena(valor: d.password.text),
+          if (d.passwordConfirmar.text.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            _PorcentajeSimilitud(
+              original: d.password.text,
+              confirmacion: d.passwordConfirmar.text,
+            ),
+          ],
           const SizedBox(height: AppSpacing.lg),
 
           InkWell(
@@ -97,7 +106,8 @@ class _PasoCuentaState extends State<PasoCuenta> {
                     padding: const EdgeInsets.only(top: 11),
                     child: Text.rich(
                       TextSpan(
-                        text: 'Acepto que la UPIIZ trate mis datos para fines '
+                        text:
+                            'Acepto que la UPIIZ trate mis datos para fines '
                             'de gestión escolar. ',
                         children: [
                           TextSpan(
@@ -110,8 +120,10 @@ class _PasoCuentaState extends State<PasoCuenta> {
                           ),
                         ],
                       ),
-                      style: AppTypography.bodyMedium
-                          .copyWith(fontSize: 13.5, height: 1.5),
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontSize: 13.5,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -164,6 +176,88 @@ class ReglasContrasena extends StatelessWidget {
               ),
             ],
           ),
+      ],
+    );
+  }
+}
+
+class _PorcentajeSimilitud extends StatelessWidget {
+  const _PorcentajeSimilitud({
+    required this.original,
+    required this.confirmacion,
+  });
+
+  final String original;
+  final String confirmacion;
+
+  int _levenshtein(String a, String b) {
+    if (a.isEmpty) return b.length;
+    if (b.isEmpty) return a.length;
+
+    List<int> v0 = List<int>.generate(b.length + 1, (i) => i);
+    List<int> v1 = List<int>.filled(b.length + 1, 0);
+
+    for (int i = 0; i < a.length; i++) {
+      v1[0] = i + 1;
+      for (int j = 0; j < b.length; j++) {
+        int cost = (a[i] == b[j]) ? 0 : 1;
+
+        int delete = v0[j + 1] + 1;
+        int insert = v1[j] + 1;
+        int sub = v0[j] + cost;
+
+        int min = delete;
+        if (insert < min) min = insert;
+        if (sub < min) min = sub;
+
+        v1[j + 1] = min;
+      }
+      for (int j = 0; j < v0.length; j++) {
+        v0[j] = v1[j];
+      }
+    }
+    return v1[b.length];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    int maxLength = original.length > confirmacion.length
+        ? original.length
+        : confirmacion.length;
+    double similarity = 0.0;
+    if (maxLength > 0) {
+      int dist = _levenshtein(original, confirmacion);
+      similarity = (1.0 - (dist / maxLength)) * 100;
+    }
+
+    Color color;
+    if (similarity == 100.0) {
+      color = AppColors.success;
+    } else if (similarity >= 50.0) {
+      color = AppColors.warning;
+    } else {
+      color = AppColors.danger;
+    }
+
+    return Row(
+      children: [
+        Icon(
+          similarity == 100.0
+              ? Icons.check_rounded
+              : Icons.info_outline_rounded,
+          size: 15,
+          color: color,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          similarity == 100.0
+              ? 'Coinciden perfectamente'
+              : 'Similitud: ${similarity.toInt()}%',
+          style: AppTypography.hint.copyWith(
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
       ],
     );
   }

@@ -8,6 +8,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/brand_mark.dart';
 import '../adeudos/adeudos_screen.dart';
+import '../auth/login_screen.dart';
 import '../expediente/expediente_screen.dart';
 import '../inicio/inicio_screen.dart';
 import '../solicitudes/solicitudes_screen.dart';
@@ -26,24 +27,95 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Seccion _seccion = Seccion.inicio;
+  bool _railHovered = false;
 
   void _ir(Seccion destino) => setState(() => _seccion = destino);
 
   Widget get _contenido => switch (_seccion) {
-        Seccion.inicio => InicioScreen(onIr: _ir),
-        Seccion.expediente => ExpedienteScreen(onIr: _ir),
-        Seccion.solicitudes => SolicitudesScreen(onIr: _ir),
-        Seccion.adeudos => AdeudosScreen(onIr: _ir),
-      };
+    Seccion.inicio => InicioScreen(onIr: _ir),
+    Seccion.expediente => ExpedienteScreen(onIr: _ir),
+    Seccion.solicitudes => SolicitudesScreen(onIr: _ir),
+    Seccion.adeudos => AdeudosScreen(onIr: _ir),
+  };
 
   @override
   Widget build(BuildContext context) {
-    if (context.hasSidebar) {
+    if (!context.formFactor.isCompact) {
       return Scaffold(
-        body: Row(
+        body: Stack(
           children: [
-            _MenuLateral(actual: _seccion, onSeleccionar: _ir),
-            Expanded(child: SafeArea(child: _contenido)),
+            Row(
+              children: [
+                const SizedBox(width: 80),
+                Expanded(child: SafeArea(child: _contenido)),
+              ],
+            ),
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: 0,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                width: _railHovered ? AppSize.sidebarWidth : 80.0,
+                child: MouseRegion(
+                  onEnter: (_) => setState(() => _railHovered = true),
+                  onExit: (_) => setState(() => _railHovered = false),
+                  child: Material(
+                    elevation: _railHovered ? 8 : 0,
+                    color: AppColors.guinda,
+                    child: ClipRect(
+                      child: OverflowBox(
+                        alignment: Alignment.topLeft,
+                        minWidth: AppSize.sidebarWidth,
+                        maxWidth: AppSize.sidebarWidth,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              top: 0,
+                              bottom: 0,
+                              left: 0,
+                              width: 80,
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 150),
+                                opacity: _railHovered ? 0.0 : 1.0,
+                                child: IgnorePointer(
+                                  ignoring: _railHovered,
+                                  child: _MenuLateralRail(
+                                    actual: _seccion,
+                                    onSeleccionar: _ir,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 0,
+                              bottom: 0,
+                              left: 0,
+                              width: AppSize.sidebarWidth,
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 150),
+                                opacity: _railHovered ? 1.0 : 0.0,
+                                child: IgnorePointer(
+                                  ignoring: !_railHovered,
+                                  child: _MenuLateral(
+                                    actual: _seccion,
+                                    onSeleccionar: (s) {
+                                      _ir(s);
+                                      setState(() => _railHovered = false);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       );
@@ -247,14 +319,15 @@ class _ChipUsuario extends StatelessWidget {
                 ),
                 Text(
                   DatosDemo.boleta,
-                  style: AppTypography.hint
-                      .copyWith(color: AppColors.onGuindaFaint),
+                  style: AppTypography.hint.copyWith(
+                    color: AppColors.onGuindaFaint,
+                  ),
                 ),
               ],
             ),
           ),
           IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: () => cerrarSesion(context),
             tooltip: 'Cerrar sesión',
             icon: const Icon(Icons.logout_rounded, size: 18),
             color: AppColors.onGuindaFaint,
@@ -263,6 +336,46 @@ class _ChipUsuario extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Muestra un diálogo de confirmación y regresa al LoginScreen.
+void cerrarSesion(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text('¿Cerrar sesión?', style: AppTypography.titleLarge),
+      content: Text(
+        'Saldrás de tu cuenta de GESCO y regresarás a la pantalla de inicio de sesión.',
+        style: AppTypography.bodyMedium,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(dialogContext).pop();
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Sesión cerrada correctamente.'),
+                backgroundColor: AppColors.guinda,
+              ),
+            );
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.guinda,
+            foregroundColor: AppColors.onGuinda,
+          ),
+          child: const Text('Cerrar sesión'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _BarraInferior extends StatelessWidget {
@@ -288,6 +401,66 @@ class _BarraInferior extends StatelessWidget {
             selectedIcon: Icon(seccion.iconoActivo, color: AppColors.guinda),
             label: seccion.tituloCorto,
             tooltip: seccion.titulo,
+          ),
+      ],
+    );
+  }
+}
+
+class _MenuLateralRail extends StatelessWidget {
+  const _MenuLateralRail({required this.actual, required this.onSeleccionar});
+
+  final Seccion actual;
+  final ValueChanged<Seccion> onSeleccionar;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationRail(
+      selectedIndex: actual.index,
+      onDestinationSelected: (i) => onSeleccionar(Seccion.values[i]),
+      backgroundColor: AppColors.guinda,
+      minWidth: 80,
+      selectedIconTheme: const IconThemeData(color: AppColors.guinda),
+      unselectedIconTheme: const IconThemeData(color: Color(0xFFD6BDB7)),
+      selectedLabelTextStyle: AppTypography.bodySmall.copyWith(
+        color: AppColors.surface,
+        fontWeight: FontWeight.bold,
+        fontSize: 11.5,
+      ),
+      unselectedLabelTextStyle: AppTypography.bodySmall.copyWith(
+        color: const Color(0xFFD6BDB7),
+        fontSize: 11.5,
+      ),
+      indicatorColor: AppColors.surface,
+      labelType: NavigationRailLabelType.all,
+      leading: const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: BrandMark(mostrarNombre: false),
+      ),
+      trailing: Expanded(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+            child: IconButton(
+              onPressed: () => cerrarSesion(context),
+              tooltip: 'Cerrar sesión',
+              icon: const Icon(Icons.logout_rounded),
+              color: const Color(0xFFD6BDB7),
+            ),
+          ),
+        ),
+      ),
+      destinations: [
+        for (final seccion in Seccion.values)
+          NavigationRailDestination(
+            icon: Icon(seccion.icono),
+            selectedIcon: Icon(seccion.iconoActivo),
+            label: Text(
+              seccion.tituloCorto,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+            ),
           ),
       ],
     );

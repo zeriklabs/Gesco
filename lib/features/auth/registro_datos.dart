@@ -25,8 +25,10 @@ class RegistroDatos {
   final apellidoPaterno = TextEditingController();
   final apellidoMaterno = TextEditingController();
   final curp = TextEditingController();
+  final rfc = TextEditingController();
   String? estadoCivil;
   String? municipioNacimiento;
+  final municipioNacimientoTextController = TextEditingController();
 
   final telefonoCelular = TextEditingController();
   final telefonoFijo = TextEditingController();
@@ -67,8 +69,13 @@ class RegistroDatos {
   final datosTrabajo = TextEditingController();
   bool visibleParaTutor = false;
 
+  // --- Paso 5.5: fotografía ------------------------------------------------
+  String? fotoPath;
+
   // --- Paso 6: escolares ---------------------------------------------------
   String? carrera;
+  String? planEstudio;
+  bool esNuevoIngreso = false;
   String? semestre;
   String? grupo;
   String? situacionAcademica;
@@ -138,9 +145,10 @@ class RegistroDatos {
   void dispose() {
     for (final c in [
       boleta, correo, password, passwordConfirmar, codigo,
-      nombre, apellidoPaterno, apellidoMaterno, curp,
+      nombre, apellidoPaterno, apellidoMaterno, curp, rfc,
       telefonoCelular, telefonoFijo,
       codigoPostal, colonia, calle, numeroExterior, numeroInterior,
+      municipioNacimientoTextController,
       tutorNombre, tutorApellidoPaterno, tutorApellidoMaterno,
       tutorOcupacion, tutorTelefonoCelular, tutorTelefonoFijo,
       tutorTelefonoTrabajo,

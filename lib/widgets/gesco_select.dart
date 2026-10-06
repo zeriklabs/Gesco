@@ -38,7 +38,9 @@ class GescoSelect<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     // Si el valor guardado ya no está en la lista (por ejemplo, cambió el
     // estado y con él los municipios), no se lo pasamos al Dropdown: tronaría.
-    final valorValido = value != null && opciones.contains(value) ? value : null;
+    final valorValido = value != null && opciones.contains(value)
+        ? value
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,10 +60,7 @@ class GescoSelect<T> extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         DropdownButtonFormField<T>(
-          // `initialValue` no se entera si el padre cambia el valor, y aquí sí
-          // pasa: al cambiar de estado, el municipio elegido deja de existir.
-          // La key cambia con la lista de opciones y fuerza un widget nuevo.
-          key: ValueKey('$label-${opciones.length}-${opciones.hashCode}'),
+          key: ValueKey('$label-$valorValido-${opciones.length}'),
           initialValue: valorValido,
           isExpanded: true,
           onChanged: opciones.isEmpty ? null : onChanged,
@@ -71,8 +70,9 @@ class GescoSelect<T> extends StatelessWidget {
           decoration: InputDecoration(
             hintText: opciones.isEmpty ? 'Sin opciones' : hintText,
             filled: true,
-            fillColor:
-                opciones.isEmpty ? AppColors.surfaceMuted : AppColors.surface,
+            fillColor: opciones.isEmpty
+                ? AppColors.surfaceMuted
+                : AppColors.surface,
           ),
           items: [
             for (final opcion in opciones)
@@ -159,7 +159,7 @@ class OpcionSiNo extends StatelessWidget {
   }
 }
 
-class _Opcion extends StatelessWidget {
+class _Opcion extends StatefulWidget {
   const _Opcion({
     required this.texto,
     required this.activa,
@@ -171,24 +171,56 @@ class _Opcion extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_Opcion> createState() => _OpcionState();
+}
+
+class _OpcionState extends State<_Opcion> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     return Semantics(
-      selected: activa,
+      selected: widget.activa,
       button: true,
-      child: Material(
-        color: activa ? AppColors.guinda : Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.sm - 2),
-        child: InkWell(
-          onTap: onTap,
+      child: AnimatedScale(
+        scale: _pressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOutCubic,
+        child: Material(
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.sm - 2),
-          child: Container(
-            height: 42,
-            alignment: Alignment.center,
-            child: Text(
-              texto,
-              style: AppTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.w700,
-                color: activa ? AppColors.onGuinda : AppColors.inkSecondary,
+          child: InkWell(
+            onTap: widget.onTap,
+            onHighlightChanged: (h) => setState(() => _pressed = h),
+            borderRadius: BorderRadius.circular(AppRadius.sm - 2),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: widget.activa ? AppColors.guinda : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppRadius.sm - 2),
+                boxShadow: widget.activa
+                    ? [
+                        BoxShadow(
+                          color: AppColors.guinda.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                style: AppTypography.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: widget.activa
+                      ? AppColors.onGuinda
+                      : AppColors.inkSecondary,
+                ),
+                child: Text(widget.texto),
               ),
             ),
           ),

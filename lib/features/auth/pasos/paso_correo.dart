@@ -35,7 +35,12 @@ class _PasoCorreoState extends State<PasoCorreo> {
   void initState() {
     super.initState();
     _arrancarConteo();
+    for (final f in _focos) {
+      f.addListener(_alCambiarFoco);
+    }
   }
+
+  void _alCambiarFoco() => setState(() {});
 
   @override
   void dispose() {
@@ -44,6 +49,7 @@ class _PasoCorreoState extends State<PasoCorreo> {
       c.dispose();
     }
     for (final f in _focos) {
+      f.removeListener(_alCambiarFoco);
       f.dispose();
     }
     super.dispose();
@@ -114,30 +120,79 @@ class _PasoCorreoState extends State<PasoCorreo> {
           LayoutBuilder(
             builder: (context, constraints) {
               // En pantallas angostas las seis cajas no caben a 56 px.
-              final ancho =
-                  ((constraints.maxWidth - (5 * AppSpacing.xs)) / 6).clamp(38.0, 56.0).toDouble();
+              final ancho = ((constraints.maxWidth - (5 * AppSpacing.xs)) / 6)
+                  .clamp(38.0, 56.0)
+                  .toDouble();
               return Row(
                 children: [
                   for (var i = 0; i < 6; i++) ...[
                     if (i > 0) const SizedBox(width: AppSpacing.xs),
-                    SizedBox(
-                      width: ancho,
-                      child: TextFormField(
-                        controller: _campos[i],
-                        focusNode: _focos[i],
-                        autofocus: i == 0,
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        style: AppTypography.numeral.copyWith(fontSize: 24),
-                        decoration: const InputDecoration(
-                          counterText: '',
-                          contentPadding:
-                              EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    AnimatedScale(
+                      scale: _focos[i].hasFocus ? 1.05 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutBack,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                        width: ancho,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: _focos[i].hasFocus
+                              ? AppColors.surface
+                              : (completo
+                                    ? AppColors.successTint
+                                    : AppColors.ground),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: completo
+                                ? AppColors.successBorder
+                                : (_focos[i].hasFocus
+                                      ? AppColors.guinda
+                                      : (_campos[i].text.isNotEmpty
+                                            ? AppColors.borderStrong
+                                            : AppColors.border)),
+                            width: _focos[i].hasFocus ? 2.0 : 1.5,
+                          ),
+                          boxShadow: _focos[i].hasFocus
+                              ? [
+                                  const BoxShadow(
+                                    color: AppColors.focusGlow,
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ]
+                              : [],
                         ),
-                        onChanged: (v) => _alEscribir(i, v),
+                        child: Center(
+                          child: TextFormField(
+                            controller: _campos[i],
+                            focusNode: _focos[i],
+                            autofocus: i == 0,
+                            textAlign: TextAlign.center,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            style: AppTypography.numeral.copyWith(
+                              fontSize: 26,
+                              color: completo
+                                  ? AppColors.successInk
+                                  : AppColors.ink,
+                            ),
+                            decoration: const InputDecoration(
+                              counterText: '',
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              filled: false,
+                            ),
+                            onChanged: (v) => _alEscribir(i, v),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -147,26 +202,51 @@ class _PasoCorreoState extends State<PasoCorreo> {
           ),
           const SizedBox(height: AppSpacing.md),
 
-          if (completo)
-            Row(
-              children: [
-                const Icon(Icons.check_circle_rounded,
-                    size: 17, color: AppColors.success),
-                const SizedBox(width: 6),
-                Text(
-                  'Código completo',
-                  style: AppTypography.hint.copyWith(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w700,
-                  ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.2),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
                 ),
-              ],
-            )
-          else
-            Text(
-              'Escribe los 6 dígitos. Puedes pegarlos de un jalón.',
-              style: AppTypography.hint,
-            ),
+              );
+            },
+            child: completo
+                ? Row(
+                    key: const ValueKey('completo'),
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        size: 17,
+                        color: AppColors.success,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Código completo',
+                        style: AppTypography.hint.copyWith(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    key: const ValueKey('incompleto'),
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Escribe los 6 dígitos. Puedes pegarlos de un jalón.',
+                          style: AppTypography.hint,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
 
           const SizedBox(height: AppSpacing.xl),
 
@@ -184,8 +264,9 @@ class _PasoCorreoState extends State<PasoCorreo> {
                     _restantes > 0
                         ? '¿No te llegó? Puedes pedir otro en $_restantes s.'
                         : '¿No te llegó? Pide otro código.',
-                    style: AppTypography.bodyMedium
-                        .copyWith(color: AppColors.inkSecondary),
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.inkSecondary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),

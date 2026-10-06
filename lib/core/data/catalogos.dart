@@ -1,3 +1,5 @@
+import 'municipios.dart';
+
 /// Listas de los desplegables.
 ///
 /// Van separadas en dos grupos a propósito:
@@ -38,13 +40,38 @@ abstract final class Catalogos {
     '1RO', '2DO', '3RO', '4TO', '5TO', '6TO', '7MO', '8VO', '9NO', '10MO',
   ];
 
-  // === Por confirmar con Gestión Escolar ===================================
-
-  /// TODO(gescolar): de las capturas solo salió Ingeniería en Sistemas
-  /// Computacionales. Falta la lista completa de programas de la UPIIZ.
+  // === Por confirmar con Gestión Escolar ===================================/// Programas académicos ofertados en la UPIIZ - IPN.
   static const carreras = <String>[
     'ING. EN SISTEMAS COMPUTACIONALES',
+    'ING. AMBIENTAL',
+    'ING. MECATRÓNICA',
+    'ING. EN ALIMENTOS',
+    'ING. METALÚRGICA',
+    'ING. INTELIGENCIA ARTIFICIAL'
   ];
+
+  /// Planes de estudio correspondientes a cada carrera (ej. Sistemas 2020, Ambiental 2009).
+  static List<String> planesDe(String? carrera) {
+    if (carrera == null || carrera.isEmpty) {
+      return const ['PLAN 2020', 'PLAN 2009'];
+    }
+    if (carrera.contains('SISTEMAS')) {
+      return const ['SISTEMAS 2020', 'SISTEMAS 2009'];
+    }
+    if (carrera.contains('AMBIENTAL')) {
+      return const ['AMBIENTAL 2009', 'AMBIENTAL 2020'];
+    }
+    if (carrera.contains('MECATRÓNICA')) {
+      return const ['MECATRÓNICA 2020', 'MECATRÓNICA 2009'];
+    }
+    if (carrera.contains('ALIMENTOS')) {
+      return const ['ALIMENTOS 2020', 'ALIMENTOS 2009'];
+    }
+    if (carrera.contains('METALÚRGICA')) {
+      return const ['METALÚRGICA 2020', 'METALÚRGICA 2009'];
+    }
+    return const ['PLAN 2020', 'PLAN 2009'];
+  }
 
   /// TODO(gescolar): confirmar el catálogo. En las capturas aparecieron
   /// 1CM1, 1MM1, 3CM1, 8CM1 y 9CM1 — el patrón parece ser
@@ -64,12 +91,13 @@ abstract final class Catalogos {
     'REINGRESO',
   ];
 
-  /// TODO(gescolar): confirmar. De las capturas salió
-  /// "POR DEBAJO DE LA MÍNIMA".
   static const tipoCarga = <String>[
-    'CARGA COMPLETA',
-    'POR DEBAJO DE LA MÍNIMA',
-    'POR ENCIMA DE LA MÁXIMA',
+    'Debajo de la mínima',
+    'Mínima',
+    'Debajo de la media',
+    'Media',
+    'Por encima de la media',
+    'Máxima',
   ];
 
   /// Los tres niveles del plan de estudios del IPN.
@@ -157,20 +185,17 @@ abstract final class Catalogos {
     'Otra',
   ];
 
-  /// Municipios de Zacatecas. Los de otros estados los tendría que dar la API.
-  ///
-  /// TODO(gescolar): idealmente el código postal resuelve colonia, municipio y
-  /// estado contra el catálogo de SEPOMEX, y esta lista desaparece.
-  static const municipiosZacatecas = <String>[
-    'ZACATECAS', 'GUADALUPE', 'FRESNILLO', 'JEREZ', 'OJOCALIENTE',
-    'CALERA', 'SOMBRERETE', 'RÍO GRANDE', 'LORETO', 'PINOS',
-    'VILLANUEVA', 'NOCHISTLÁN', 'TLALTENANGO', 'JUCHIPILA', 'OTRO',
-  ];
+  static final Map<String, List<String>> _municipiosCache = {};
 
   /// Los municipios que corresponden a un estado.
   static List<String> municipiosDe(String? estado) {
-    if (estado == 'ZACATECAS') return municipiosZacatecas;
-    // Fuera de Zacatecas todavía no hay catálogo; se deja capturar libre.
-    return const <String>[];
+    if (estado == null) return const <String>[];
+    return _municipiosCache.putIfAbsent(estado, () {
+      final lista = municipiosPorEstado[estado];
+      if (lista != null) {
+        return [...lista, 'OTRO'];
+      }
+      return const <String>[];
+    });
   }
 }

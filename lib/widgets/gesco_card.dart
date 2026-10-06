@@ -14,6 +14,7 @@ class GescoCard extends StatelessWidget {
     this.color,
     this.colorBorde,
     this.bordeGrueso = false,
+    this.accionEsquina,
     this.onTap,
   });
 
@@ -25,7 +26,33 @@ class GescoCard extends StatelessWidget {
   /// Borde de 2 px para la tarjeta que exige atención.
   final bool bordeGrueso;
 
+  /// Un widget que se posiciona de forma absoluta en la esquina superior derecha.
+  final Widget? accionEsquina;
+
   final VoidCallback? onTap;
+
+  Widget _buildContenido() {
+    if (accionEsquina == null) {
+      return Padding(
+        padding: padding,
+        child: child,
+      );
+    }
+
+    return Stack(
+      children: [
+        Padding(
+          padding: padding,
+          child: child,
+        ),
+        Positioned(
+          top: 0,
+          right: 0,
+          child: accionEsquina!,
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +68,7 @@ class GescoCard extends StatelessWidget {
     if (onTap == null) {
       return Container(
         decoration: decoracion,
-        padding: padding,
-        child: child,
+        child: _buildContenido(),
       );
     }
 
@@ -54,8 +80,7 @@ class GescoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Container(
           decoration: decoracion.copyWith(color: Colors.transparent),
-          padding: padding,
-          child: child,
+          child: _buildContenido(),
         ),
       ),
     );
@@ -83,16 +108,16 @@ class CabeceraPantalla extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (contexto != null) ...[
-          Text(contexto!, style: AppTypography.bodySmall.copyWith(fontSize: 13)),
-          const SizedBox(height: AppSpacing.xxs),
-        ],
         Text(
           titulo,
           style: compacto
               ? AppTypography.displayMedium
               : AppTypography.displayLarge,
         ),
+        if (contexto != null) ...[
+          const SizedBox(height: AppSpacing.xxs),
+          Text(contexto!, style: AppTypography.bodySmall.copyWith(fontSize: 13)),
+        ],
       ],
     );
 

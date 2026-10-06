@@ -543,7 +543,14 @@ class _TarjetaCrearCuenta extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.ground,
         borderRadius: BorderRadius.circular(AppRadius.lg + 2),
-        border: Border.all(color: AppColors.border, width: 1.5),
+        border: Border.all(color: AppColors.borderSubtle, width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.ink.withOpacity(0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       // No basta con mirar si estamos en celular: en escritorio esta tarjeta
       // también se queda sin ancho. Decide con el espacio real que le tocó.

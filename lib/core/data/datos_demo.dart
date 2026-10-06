@@ -46,12 +46,34 @@ abstract final class DatosDemo {
   /// siguen igual.
   ///
   /// TODO(backend): inventados. Ninguno sale de una persona real.
-  static final datosDeContacto = <String, String>{
-    'Domicilio': 'Av. Siempre Viva 100, Centro, Zacatecas, Zacatecas, 98000',
-    'Teléfono celular': '492 100 2030',
+  static const fechaNacimiento = '08 / Septiembre / 2004';
+
+  /// Los datos personales que de verdad se revisan en la reinscripción.
+  static final datosPersonales = <String, String>{
+    'Género': 'Femenino',
+    'Estado civil': 'Soltero/a',
     'Teléfono fijo': '492 955 1010',
-    'Correo': 'alumno@alumno.ipn.mx',
-    'Número de seguro social': '00000000000',
+    'Celular': '492 100 2030',
+    '¿Trabajas?': 'No',
+  };
+
+  /// Domicilio estructurado. Si el alumno no lo edita, se oculta el formulario.
+  static final domicilioActual = <String, String>{
+    'Calle': 'Av. Siempre Viva',
+    'Colonia': 'Centro',
+    'N° ext': '100',
+    'N° int': '',
+    'C.P.': '98000',
+    'Estado': 'Zacatecas',
+    'Municipio': 'Zacatecas',
+  };
+
+  static final datosTutor = <String, String>{
+    'Nombre del tutor': 'Rosa Reyes Luna',
+    'Parentesco': 'Madre',
+    'Teléfono del tutor': '492 921 5544',
+    'Correo del tutor': 'rosa.reyes@gmail.com',
+    'Domicilio del tutor': 'Mismo que el alumno',
   };
 
   /// Las materias del periodo actual.

@@ -24,23 +24,29 @@ abstract final class AppColors {
 
   // --- Superficies ---------------------------------------------------------
 
-  /// Fondo general de la aplicación.
-  static const ground = Color(0xFFFAF8F6);
+  /// Fondo general de la aplicación (Gris neutro suave que reduce la fatiga visual).
+  static const ground = Color(0xFFF0F2F5);
 
-  /// Tarjetas y campos.
+  /// Tarjetas y campos (Blanco puro para máximo contraste y legibilidad).
   static const surface = Color(0xFFFFFFFF);
 
-  /// Superficie secundaria: botones de acceso rápido, zonas de arrastre.
-  static const surfaceAlt = Color(0xFFFAF6F3);
+  /// Superficie secundaria: botones de acceso rápido, contenedores internos.
+  static const surfaceAlt = Color(0xFFE8ECEF);
 
   /// Campo de solo lectura / autocompletado.
-  static const surfaceMuted = Color(0xFFF4EFEA);
+  static const surfaceMuted = Color(0xFFE3E8EC);
 
-  // --- Bordes --------------------------------------------------------------
+  // --- Bordes y Sombras ----------------------------------------------------
 
-  static const border = Color(0xFFF0EAE5);
-  static const borderStrong = Color(0xFFE7E1DC);
-  static const borderMuted = Color(0xFFE4DCD5);
+  static const border = Color(0xFFE1E5EB);
+  static const borderStrong = Color(0xFFD5DBE1);
+  static const borderMuted = Color(0xFFCCD2D8);
+
+  /// Borde sutil semi-transparente para contención orgánica (Regla Kowalski).
+  static const borderSubtle = Color(0x1A731C24);
+
+  /// Resplandor de foco sutil para entradas activas.
+  static const focusGlow = Color(0x26731C24);
 
   // --- Texto ---------------------------------------------------------------
 

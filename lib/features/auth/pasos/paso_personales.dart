@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/data/catalogos.dart';
+import '../../../core/data/codigos_postales.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/curp.dart';
 import '../../../core/utils/validators.dart';
 import '../../../widgets/gesco_select.dart';
 import '../../../widgets/gesco_text_field.dart';
@@ -27,6 +29,19 @@ class PasoPersonales extends StatefulWidget {
 
 class _PasoPersonalesState extends State<PasoPersonales> {
   RegistroDatos get d => widget.datos;
+  String _ultimoRfcAuto = '';
+  String _ultimoEstadoNacimiento = '';
+  bool _modoOtraColonia = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (d.rfc.text.isEmpty && d.curp.text.isNotEmpty) {
+      _ultimoRfcAuto = d.rfcDerivado;
+      d.rfc.text = _ultimoRfcAuto;
+    }
+    _ultimoEstadoNacimiento = d.estadoNacimientoDerivado;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +93,8 @@ class _PasoPersonalesState extends State<PasoPersonales> {
             label: 'CURP',
             controller: d.curp,
             hintText: 'GATG040822HZSRRLA7',
-            helperText: 'De aquí salen tu RFC, tu fecha de nacimiento y tu '
+            helperText:
+                'De aquí salen tu RFC, tu fecha de nacimiento y tu '
                 'estado de nacimiento.',
             isRequired: true,
             textCapitalization: TextCapitalization.characters,
@@ -87,7 +103,22 @@ class _PasoPersonalesState extends State<PasoPersonales> {
               FilteringTextInputFormatter.allow(RegExp(r'[0-9A-Za-zÑñ]')),
             ],
             validator: Validators.curp,
-            onChanged: (_) => setState(() {}),
+            onChanged: (val) {
+              setState(() {
+                final curpInfo = Curp.analizar(val);
+                final rfcAuto = curpInfo?.rfc ?? '';
+                if (d.rfc.text.isEmpty || d.rfc.text == _ultimoRfcAuto) {
+                  d.rfc.text = rfcAuto;
+                  _ultimoRfcAuto = rfcAuto;
+                }
+
+                final nuevoEstado = curpInfo?.estadoNacimiento ?? '';
+                if (_ultimoEstadoNacimiento != nuevoEstado) {
+                  d.municipioNacimiento = null;
+                  _ultimoEstadoNacimiento = nuevoEstado;
+                }
+              });
+            },
           ),
           const SizedBox(height: AppSpacing.lg),
 
@@ -95,11 +126,12 @@ class _PasoPersonalesState extends State<PasoPersonales> {
             children: [
               GescoTextField(
                 label: 'RFC',
-                derivado: true,
-                initialValue: d.rfcDerivado,
-                key: ValueKey('rfc-${d.rfcDerivado}'),
-                hintText: 'Escribe tu CURP',
-                helperText: 'Sin homoclave: esos 3 los asigna el SAT.',
+                controller: d.rfc,
+                isRequired: true,
+                textCapitalization: TextCapitalization.characters,
+                hintText: 'Escribe tu RFC',
+                helperText: 'Autocompletado desde el CURP, editable.',
+                validator: (v) => Validators.requerido(v, campo: 'El RFC'),
               ),
               GescoTextField(
                 label: 'Fecha de nacimiento',
@@ -134,21 +166,33 @@ class _PasoPersonalesState extends State<PasoPersonales> {
                 opciones: Catalogos.estadoCivil,
                 value: d.estadoCivil,
                 onChanged: (v) => setState(() => d.estadoCivil = v),
-                validator: (v) =>
-                    v == null ? 'Elige tu estado civil' : null,
+                validator: (v) => v == null ? 'Elige tu estado civil' : null,
               ),
-              GescoSelect<String>(
-                label: 'Municipio de nacimiento',
-                isRequired: true,
-                opciones: Catalogos.municipiosDe(d.estadoNacimientoDerivado),
-                value: d.municipioNacimiento,
-                helperText: curpListo &&
-                        Catalogos.municipiosDe(d.estadoNacimientoDerivado)
-                            .isEmpty
-                    ? 'Todavía no hay catálogo para ese estado.'
-                    : null,
-                onChanged: (v) => setState(() => d.municipioNacimiento = v),
-              ),
+              Catalogos.municipiosDe(d.estadoNacimientoDerivado).isNotEmpty
+                  ? GescoSelect<String>(
+                      label: 'Municipio de nacimiento',
+                      isRequired: true,
+                      opciones: Catalogos.municipiosDe(
+                        d.estadoNacimientoDerivado,
+                      ),
+                      value: d.municipioNacimiento,
+                      onChanged: (v) =>
+                          setState(() => d.municipioNacimiento = v),
+                      validator: (v) => v == null ? 'Elige tu municipio' : null,
+                    )
+                  : GescoTextField(
+                      label: 'Municipio de nacimiento',
+                      controller: d.municipioNacimientoTextController,
+                      isRequired: true,
+                      hintText: 'Escribe tu municipio de nacimiento',
+                      helperText: curpListo
+                          ? 'Escribe el municipio de tu estado.'
+                          : null,
+                      validator: (v) => Validators.requerido(
+                        v,
+                        campo: 'El municipio de nacimiento',
+                      ),
+                    ),
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -193,7 +237,25 @@ class _PasoPersonalesState extends State<PasoPersonales> {
                   FilteringTextInputFormatter.digitsOnly,
                 ],
                 validator: Validators.codigoPostal,
-                onChanged: (_) => setState(() {}),
+                onChanged: (val) {
+                  if (val.length == 5) {
+                    final info = CodigosPostales.buscar(val);
+                    if (info != null) {
+                      setState(() {
+                        _modoOtraColonia = false;
+                        d.estado = info.estado;
+                        d.municipio = info.municipio;
+                        if (info.colonias.isNotEmpty) {
+                          d.colonia.text = info.primeraColonia;
+                        }
+                      });
+                    } else {
+                      setState(() {});
+                    }
+                  } else {
+                    setState(() {});
+                  }
+                },
               ),
               GescoSelect<String>(
                 label: 'Estado',
@@ -221,17 +283,84 @@ class _PasoPersonalesState extends State<PasoPersonales> {
           ),
           const SizedBox(height: AppSpacing.lg),
 
-          GescoTextField(
-            label: 'Colonia',
-            controller: d.colonia,
-            isRequired: true,
-            textCapitalization: TextCapitalization.characters,
-            validator: (v) => Validators.requerido(v, campo: 'La colonia'),
+          // Selector o campo de texto para Colonia según el CP
+          Builder(
+            builder: (context) {
+              final cpInfo = CodigosPostales.buscar(d.codigoPostal.text);
+              const opcionOtra = 'OTRA (ESCRIBIR MANUALMENTE)';
+
+              if (cpInfo != null &&
+                  cpInfo.colonias.isNotEmpty &&
+                  !_modoOtraColonia) {
+                final opciones = [...cpInfo.colonias, opcionOtra];
+                final valorValido = cpInfo.colonias.contains(d.colonia.text)
+                    ? d.colonia.text
+                    : (d.colonia.text.isEmpty
+                          ? cpInfo.primeraColonia
+                          : opcionOtra);
+
+                return GescoSelect<String>(
+                  label: 'Colonia',
+                  isRequired: true,
+                  opciones: opciones,
+                  value: valorValido,
+                  onChanged: (v) {
+                    if (v == opcionOtra) {
+                      setState(() {
+                        _modoOtraColonia = true;
+                        d.colonia.clear();
+                      });
+                    } else if (v != null) {
+                      setState(() {
+                        d.colonia.text = v;
+                      });
+                    }
+                  },
+                  validator: (v) =>
+                      d.colonia.text.trim().isEmpty ? 'Elige tu colonia' : null,
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GescoTextField(
+                    label: 'Colonia',
+                    controller: d.colonia,
+                    isRequired: true,
+                    textCapitalization: TextCapitalization.characters,
+                    validator: (v) =>
+                        Validators.requerido(v, campo: 'La colonia'),
+                  ),
+                  if (cpInfo != null && cpInfo.colonias.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _modoOtraColonia = false;
+                            d.colonia.text = cpInfo.primeraColonia;
+                          });
+                        },
+                        icon: const Icon(Icons.list, size: 16),
+                        label: Text(
+                          'Elegir de la lista de SEPOMEX (${cpInfo.colonias.length} colonias)',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.guinda,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.lg),
 
           CamposEnFila(
-            flex: const [3, 1, 1],
+            flex: const [2, 1, 1],
             children: [
               GescoTextField(
                 label: 'Calle',
@@ -241,14 +370,14 @@ class _PasoPersonalesState extends State<PasoPersonales> {
                 validator: (v) => Validators.requerido(v, campo: 'La calle'),
               ),
               GescoTextField(
-                label: 'No. exterior',
+                label: 'No. ext',
                 controller: d.numeroExterior,
                 isRequired: true,
                 validator: (v) =>
                     Validators.requerido(v, campo: 'El número exterior'),
               ),
               GescoTextField(
-                label: 'No. interior',
+                label: 'No. int',
                 controller: d.numeroInterior,
                 hintText: 'Opcional',
               ),
@@ -279,7 +408,11 @@ class _AvisoAutocompletado extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_rounded, size: 17, color: AppColors.successInk),
+          const Icon(
+            Icons.check_rounded,
+            size: 17,
+            color: AppColors.successInk,
+          ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(

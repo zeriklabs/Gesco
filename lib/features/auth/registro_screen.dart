@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/data/catalogos.dart';
 import '../../core/layout/breakpoints.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
@@ -9,6 +10,7 @@ import '../home/home_screen.dart';
 import 'pasos/paso_correo.dart';
 import 'pasos/paso_cuenta.dart';
 import 'pasos/paso_escolares.dart';
+import 'pasos/paso_foto.dart';
 import 'pasos/paso_generales.dart';
 import 'pasos/paso_personales.dart';
 import 'pasos/paso_tutor.dart';
@@ -25,6 +27,7 @@ enum PasoRegistro {
   personales('Datos personales', 'CURP, domicilio y contacto'),
   tutor('Datos del tutor', 'Quién responde por ti'),
   generales('Datos generales', 'Una pregunta: ¿trabajas?'),
+  foto('Fotografía', 'Sube tu foto oficial de perfil'),
   escolares('Datos escolares', 'Carrera, grupo y carga');
 
   const PasoRegistro(this.titulo, this.descripcion);
@@ -91,7 +94,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
     // El domicilio del tutor se copia al salir de datos personales, para que
     // el paso del tutor ya lo muestre resuelto.
-    if (_paso == PasoRegistro.personales) _datos.sincronizarDomicilioTutor();
+    if (_paso == PasoRegistro.personales) {
+      _datos.sincronizarDomicilioTutor();
+      if (Catalogos.municipiosDe(_datos.estadoNacimientoDerivado).isEmpty) {
+        _datos.municipioNacimiento = _datos.municipioNacimientoTextController.text;
+      }
+    }
 
     if (_paso.esUltimo) {
       _terminar();
@@ -280,6 +288,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         PasoRegistro.personales => PasoPersonales(datos: _datos, formKey: key),
         PasoRegistro.tutor => PasoTutor(datos: _datos, formKey: key),
         PasoRegistro.generales => PasoGenerales(datos: _datos, formKey: key),
+        PasoRegistro.foto => PasoFoto(datos: _datos, formKey: key),
         PasoRegistro.escolares => PasoEscolares(datos: _datos, formKey: key),
       },
     );

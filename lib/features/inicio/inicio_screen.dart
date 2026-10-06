@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import '../../core/data/datos_demo.dart';
 import '../../core/layout/breakpoints.dart';
 import '../../core/layout/secciones.dart';
+import '../../core/models/documento.dart';
 import '../../core/models/expediente.dart';
 import '../../core/models/tramite.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../widgets/boton_notificaciones.dart';
 import '../../widgets/gesco_card.dart';
 import '../../widgets/status_pill.dart';
+
 
 /// La pantalla que GESCO no tiene.
 ///
@@ -39,47 +42,13 @@ class InicioScreen extends StatelessWidget {
               '${DatosDemo.grupo}',
           titulo: 'Hola, ${DatosDemo.nombreAlumno.split(' ').first}',
           acciones: [
-            FilledButton.icon(
-              onPressed: () => onIr(Seccion.solicitudes),
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('Nueva solicitud'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.guinda,
-                foregroundColor: AppColors.onGuinda,
-                minimumSize: const Size(0, AppSize.buttonHeightDesktop),
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                textStyle: AppTypography.button.copyWith(fontSize: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-              ),
+            BotonNotificaciones(
+              bloqueo: bloqueado,
+              onIr: onIr,
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.lg),
-
-        if (bloqueado != null) ...[
-          BannerAviso(
-            titulo: '${bloqueado.$2.nombre} — necesita corrección',
-            mensaje: '“${bloqueado.$2.observacion}”',
-            pie: '${bloqueado.$2.revisadoPor} · '
-                '${_fechaLegible(bloqueado.$2.revisadoEl)}',
-            accion: FilledButton(
-              onPressed: () => onIr(Seccion.solicitudes),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.guinda,
-                foregroundColor: AppColors.onGuinda,
-                minimumSize: const Size(0, 44),
-                textStyle: AppTypography.button.copyWith(fontSize: 13.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm + 1),
-                ),
-              ),
-              child: Text('Abrir en ${bloqueado.$1.tipo.titulo}'),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
 
         _TarjetaExpediente(expediente: expediente, onIr: onIr),
         const SizedBox(height: AppSpacing.lg),
@@ -110,7 +79,7 @@ class InicioScreen extends StatelessWidget {
   }
 
   /// El primer documento con observaciones, de cualquier trámite.
-  (Tramite, dynamic)? _primerBloqueo(List<Tramite> tramites) {
+  (Tramite, Documento)? _primerBloqueo(List<Tramite> tramites) {
     for (final t in tramites) {
       final d = t.documentoBloqueante;
       if (d != null) return (t, d);
@@ -119,16 +88,7 @@ class InicioScreen extends StatelessWidget {
   }
 }
 
-String _fechaLegible(DateTime? f) {
-  if (f == null) return '';
-  const meses = [
-    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-  ];
-  final hora = '${f.hour.toString().padLeft(2, '0')}:'
-      '${f.minute.toString().padLeft(2, '0')}';
-  return '${f.day} de ${meses[f.month - 1]}, $hora';
-}
+
 
 /// La tarjeta guinda con el estado del expediente y sus cuatro pasos.
 class _TarjetaExpediente extends StatelessWidget {
@@ -271,24 +231,39 @@ class _BloqueSolicitudes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GescoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          TituloBloque(
-            texto: 'Mis solicitudes',
-            accion: TextButton(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const TituloBloque(
+                texto: 'Mis solicitudes',
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              for (var i = 0; i < tramites.length; i++) ...[
+                if (i > 0) const Divider(height: 1),
+                _FilaTramite(
+                  tramite: tramites[i],
+                  onTap: () => onIr(Seccion.solicitudes),
+                ),
+              ],
+            ],
+          ),
+          Positioned(
+            top: -2,
+            right: -4,
+            child: TextButton(
               onPressed: () => onIr(Seccion.solicitudes),
-              child: const Text('Ver historial'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.guinda,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text('Ver historial →'),
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          for (var i = 0; i < tramites.length; i++) ...[
-            if (i > 0) const Divider(height: 1),
-            _FilaTramite(
-              tramite: tramites[i],
-              onTap: () => onIr(Seccion.solicitudes),
-            ),
-          ],
         ],
       ),
     );

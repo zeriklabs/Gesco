@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/data/catalogos.dart';
+import '../../../core/data/codigos_postales.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -27,6 +28,7 @@ class PasoTutor extends StatefulWidget {
 
 class _PasoTutorState extends State<PasoTutor> {
   RegistroDatos get d => widget.datos;
+  bool _modoTutorOtraColonia = false;
 
   @override
   Widget build(BuildContext context) {
@@ -153,6 +155,25 @@ class _PasoTutorState extends State<PasoTutor> {
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                   validator: Validators.codigoPostal,
+                  onChanged: (val) {
+                    if (val.length == 5) {
+                      final info = CodigosPostales.buscar(val);
+                      if (info != null) {
+                        setState(() {
+                          _modoTutorOtraColonia = false;
+                          d.tutorEstado = info.estado;
+                          d.tutorMunicipio = info.municipio;
+                          if (info.colonias.isNotEmpty) {
+                            d.tutorColonia.text = info.primeraColonia;
+                          }
+                        });
+                      } else {
+                        setState(() {});
+                      }
+                    } else {
+                      setState(() {});
+                    }
+                  },
                 ),
                 GescoSelect<String>(
                   label: 'Estado',
@@ -177,16 +198,86 @@ class _PasoTutorState extends State<PasoTutor> {
               anchoMinimo: 560,
             ),
             const SizedBox(height: AppSpacing.lg),
-            GescoTextField(
-              label: 'Colonia',
-              controller: d.tutorColonia,
-              isRequired: true,
-              textCapitalization: TextCapitalization.characters,
-              validator: (v) => Validators.requerido(v, campo: 'La colonia'),
+
+            // Selector o campo de texto para Colonia del tutor
+            Builder(
+              builder: (context) {
+                final cpInfo = CodigosPostales.buscar(d.tutorCodigoPostal.text);
+                const opcionOtra = 'OTRA (ESCRIBIR MANUALMENTE)';
+
+                if (cpInfo != null &&
+                    cpInfo.colonias.isNotEmpty &&
+                    !_modoTutorOtraColonia) {
+                  final opciones = [...cpInfo.colonias, opcionOtra];
+                  final valorValido =
+                      cpInfo.colonias.contains(d.tutorColonia.text)
+                      ? d.tutorColonia.text
+                      : (d.tutorColonia.text.isEmpty
+                            ? cpInfo.primeraColonia
+                            : opcionOtra);
+
+                  return GescoSelect<String>(
+                    label: 'Colonia',
+                    isRequired: true,
+                    opciones: opciones,
+                    value: valorValido,
+                    onChanged: (v) {
+                      if (v == opcionOtra) {
+                        setState(() {
+                          _modoTutorOtraColonia = true;
+                          d.tutorColonia.clear();
+                        });
+                      } else if (v != null) {
+                        setState(() {
+                          d.tutorColonia.text = v;
+                        });
+                      }
+                    },
+                    validator: (v) => d.tutorColonia.text.trim().isEmpty
+                        ? 'Elige la colonia'
+                        : null,
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GescoTextField(
+                      label: 'Colonia',
+                      controller: d.tutorColonia,
+                      isRequired: true,
+                      textCapitalization: TextCapitalization.characters,
+                      validator: (v) =>
+                          Validators.requerido(v, campo: 'La colonia'),
+                    ),
+                    if (cpInfo != null && cpInfo.colonias.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _modoTutorOtraColonia = false;
+                              d.tutorColonia.text = cpInfo.primeraColonia;
+                            });
+                          },
+                          icon: const Icon(Icons.list, size: 16),
+                          label: Text(
+                            'Elegir de la lista de SEPOMEX (${cpInfo.colonias.length} colonias)',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.guinda,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
             ),
             const SizedBox(height: AppSpacing.lg),
             CamposEnFila(
-              flex: const [3, 1, 1],
+              flex: const [2, 1, 1],
               children: [
                 GescoTextField(
                   label: 'Calle',
@@ -274,8 +365,11 @@ class _InterruptorMismoDomicilio extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on_outlined,
-                    size: 16, color: AppColors.successInk),
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 16,
+                  color: AppColors.successInk,
+                ),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   child: Text(

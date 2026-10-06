@@ -8,19 +8,25 @@ import '../../core/models/tramite.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../widgets/bloque_adeudos.dart';
 import '../../widgets/gesco_card.dart';
+import '../../widgets/gesco_select.dart';
+import '../../widgets/gesco_text_field.dart';
 import '../../widgets/status_pill.dart';
+import 'completar_datos_escolares_screen.dart';
+import 'editar_seccion_dialog.dart';
 
 /// El expediente: las cuatro secciones más los adeudos.
-///
-/// La idea de fondo del rediseño está aquí. Esto se captura una vez y los
-/// cinco trámites lo leen; en el GESCO actual cada solicitud vuelve a pedir lo
-/// mismo, y los adeudos se recapturan en cuatro formularios idénticos.
-class ExpedienteScreen extends StatelessWidget {
+class ExpedienteScreen extends StatefulWidget {
   const ExpedienteScreen({super.key, required this.onIr});
 
   final IrASeccion onIr;
 
+  @override
+  State<ExpedienteScreen> createState() => _ExpedienteScreenState();
+}
+
+class _ExpedienteScreenState extends State<ExpedienteScreen> {
   @override
   Widget build(BuildContext context) {
     final expediente = DatosDemo.expediente;
@@ -48,7 +54,13 @@ class ExpedienteScreen extends StatelessWidget {
             mensaje: 'Mientras no esté completo no puedes generar una '
                 'solicitud de reinscripción.',
             accion: FilledButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const CompletarDatosEscolaresScreen(),
+                  ),
+                );
+              },
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.guinda,
                 foregroundColor: AppColors.onGuinda,
@@ -70,11 +82,15 @@ class ExpedienteScreen extends StatelessWidget {
               _TarjetaSeccion(
                 seccion: seccion,
                 resumen: expediente.secciones[seccion],
+                onActualizar: () => setState(() {}),
               ),
               const SizedBox(height: AppSpacing.sm + 2),
             ],
             const SizedBox(height: AppSpacing.xs),
-            _TarjetaAdeudos(expediente: expediente),
+            _TarjetaAdeudos(
+              expediente: expediente,
+              onActualizar: () => setState(() {}),
+            ),
             const SizedBox(height: AppSpacing.sm + 2),
             const _TarjetaQuienLoUsa(),
           ]
@@ -98,6 +114,7 @@ class ExpedienteScreen extends StatelessWidget {
                                   seccion: SeccionExpediente.values[i],
                                   resumen: expediente
                                       .secciones[SeccionExpediente.values[i]],
+                                  onActualizar: () => setState(() {}),
                                 ),
                               ),
                               const SizedBox(width: AppSpacing.md),
@@ -109,6 +126,7 @@ class ExpedienteScreen extends StatelessWidget {
                                             SeccionExpediente.values[i + 1],
                                         resumen: expediente.secciones[
                                             SeccionExpediente.values[i + 1]],
+                                        onActualizar: () => setState(() {}),
                                       )
                                     : const SizedBox.shrink(),
                               ),
@@ -124,7 +142,10 @@ class ExpedienteScreen extends StatelessWidget {
                 flex: 2,
                 child: Column(
                   children: [
-                    _TarjetaAdeudos(expediente: expediente),
+                    _TarjetaAdeudos(
+                      expediente: expediente,
+                      onActualizar: () => setState(() {}),
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     const _TarjetaQuienLoUsa(),
                   ],
@@ -164,10 +185,34 @@ class _InsigniaAvance extends StatelessWidget {
 }
 
 class _TarjetaSeccion extends StatelessWidget {
-  const _TarjetaSeccion({required this.seccion, required this.resumen});
+  const _TarjetaSeccion({
+    required this.seccion,
+    required this.resumen,
+    required this.onActualizar,
+  });
 
   final SeccionExpediente seccion;
   final ResumenSeccion? resumen;
+  final VoidCallback onActualizar;
+
+  Future<void> _abrir(BuildContext context) async {
+    if (seccion == SeccionExpediente.escolares) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const CompletarDatosEscolaresScreen(),
+        ),
+      );
+      onActualizar();
+    } else {
+      final guardo = await EditarSeccionDialog.mostrar(
+        context,
+        seccion: seccion,
+      );
+      if (guardo == true) {
+        onActualizar();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +222,7 @@ class _TarjetaSeccion extends StatelessWidget {
 
     return GescoCard(
       colorBorde: completa ? AppColors.border : AppColors.warningBorder,
-      onTap: () {},
+      onTap: () => _abrir(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -256,7 +301,7 @@ class _TarjetaSeccion extends StatelessWidget {
           ],
           const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
-            onPressed: () {},
+            onPressed: () => _abrir(context),
             icon: Icon(
               completa ? Icons.edit_outlined : Icons.arrow_forward_rounded,
               size: 16,
@@ -278,9 +323,13 @@ class _TarjetaSeccion extends StatelessWidget {
 }
 
 class _TarjetaAdeudos extends StatelessWidget {
-  const _TarjetaAdeudos({required this.expediente});
+  const _TarjetaAdeudos({
+    required this.expediente,
+    required this.onActualizar,
+  });
 
   final Expediente expediente;
+  final VoidCallback onActualizar;
 
   @override
   Widget build(BuildContext context) {
@@ -338,7 +387,7 @@ class _TarjetaAdeudos extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () => _mostrarModalEditarAdeudos(context, onActualizar),
                     icon: const Icon(Icons.add_rounded,
                         size: 16, color: AppColors.guinda),
                     label: const Text('Agregar adeudo'),
@@ -351,7 +400,7 @@ class _TarjetaAdeudos extends StatelessWidget {
                 ],
               ),
             )
-          else
+          else ...[
             for (final a in adeudos)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -385,6 +434,20 @@ class _TarjetaAdeudos extends StatelessWidget {
                   ],
                 ),
               ),
+            const SizedBox(height: AppSpacing.xs),
+            OutlinedButton.icon(
+              onPressed: () => _mostrarModalEditarAdeudos(context, onActualizar),
+              icon: const Icon(Icons.edit_outlined,
+                  size: 16, color: AppColors.guinda),
+              label: const Text('Editar adeudos'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(0, 42),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                textStyle: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
 
           const SizedBox(height: AppSpacing.sm + 2),
           Text(
@@ -396,6 +459,170 @@ class _TarjetaAdeudos extends StatelessWidget {
       ),
     );
   }
+}
+
+void _mostrarModalEditarAdeudos(BuildContext context, VoidCallback onActualizar) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setModalState) {
+        final mq = MediaQuery.of(ctx);
+
+        void agregarAdeudo() {
+          final materiaCtrl = TextEditingController();
+          String nivel = 'NIVEL II';
+          final periodoCtrl = TextEditingController(text: DatosDemo.periodoActual);
+
+          showDialog(
+            context: ctx,
+            builder: (dialogCtx) => StatefulBuilder(
+              builder: (dialogCtx, setDialogState) => AlertDialog(
+                title: Text('Agregar materia reprobada',
+                    style: AppTypography.titleLarge),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GescoTextField(
+                        label: 'Unidad de aprendizaje (Materia)',
+                        controller: materiaCtrl,
+                        isRequired: true,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      GescoSelect<String>(
+                        label: 'Nivel',
+                        value: nivel,
+                        opciones: const [
+                          'NIVEL I',
+                          'NIVEL II',
+                          'NIVEL III',
+                          'NIVEL IV'
+                        ],
+                        onChanged: (v) => setDialogState(() => nivel = v ?? nivel),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      GescoTextField(
+                        label: 'Periodo en que la reprobaste',
+                        controller: periodoCtrl,
+                        isRequired: true,
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      if (materiaCtrl.text.trim().isEmpty) return;
+                      setModalState(() {
+                        DatosDemo.adeudos.add(
+                          Adeudo(
+                            unidadAprendizaje: materiaCtrl.text.trim(),
+                            nivel: nivel,
+                            periodoReprobada: periodoCtrl.text.trim(),
+                          ),
+                        );
+                      });
+                      onActualizar();
+                      Navigator.of(dialogCtx).pop();
+                    },
+                    style:
+                        FilledButton.styleFrom(backgroundColor: AppColors.guinda),
+                    child: const Text('Agregar'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Container(
+          constraints: BoxConstraints(maxHeight: mq.size.height * 0.85),
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius:
+                BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            mq.viewInsets.bottom + AppSpacing.lg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderStrong,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  const Icon(Icons.bar_chart_rounded,
+                      color: AppColors.guinda, size: 24),
+                  const SizedBox(width: AppSpacing.xs + 2),
+                  Expanded(
+                    child: Text(
+                      'Gestionar Adeudos Escolares',
+                      style: AppTypography.titleLarge
+                          .copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const Divider(color: AppColors.border),
+              const SizedBox(height: AppSpacing.xs),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: BloqueAdeudos(
+                    adeudos: DatosDemo.adeudos,
+                    onAgregar: agregarAdeudo,
+                    onQuitar: (a) {
+                      setModalState(() {
+                        DatosDemo.adeudos.remove(a);
+                      });
+                      onActualizar();
+                    },
+                    textoVacio:
+                        'No tienes unidades de aprendizaje adeudadas registradas en tu expediente.',
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.of(ctx).pop(),
+                icon: const Icon(Icons.check_rounded, size: 18),
+                label: const Text('Listo'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.guinda,
+                  foregroundColor: AppColors.onGuinda,
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
 }
 
 /// Qué trámite usa qué parte del expediente.

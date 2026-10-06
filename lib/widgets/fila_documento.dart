@@ -47,7 +47,9 @@ class FilaDocumento extends StatelessWidget {
       _ => 'PDF · máximo 2 MB',
     };
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: compacta ? AppSpacing.sm : AppSpacing.sm + 2,
@@ -56,9 +58,17 @@ class FilaDocumento extends StatelessWidget {
         color: noAplica ? AppColors.ground : AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: alerta ? AppColors.dangerBorder : AppColors.border,
-          width: alerta ? 2 : 1.5,
+          color: alerta ? AppColors.dangerBorder : AppColors.borderSubtle,
+          width: alerta ? 2 : 1.0,
         ),
+        boxShadow: [
+          if (!noAplica && !alerta)
+            BoxShadow(
+              color: AppColors.ink.withOpacity(0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+        ],
       ),
       child: Row(
         children: [
