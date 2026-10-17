@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/validators.dart';
+import '../../admin/admin_shell.dart';
 import '../../widgets/brand_mark.dart';
 import '../../widgets/gesco_text_field.dart';
 import '../home/home_screen.dart';
@@ -39,6 +40,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _entrar() async {
+    // Entrada al lado de Gestion Escolar. El catalogo de usuarios del sistema
+    // actual tiene una cuenta ADMIN; esto la respeta en vez de inventar otra
+    // puerta. No pasa por el validador de boleta porque ADMIN no es una.
+    // TODO(backend): el rol debe venir del servidor, no del texto tecleado.
+    if (_boleta.text.trim().toUpperCase() == 'ADMIN') {
+      FocusScope.of(context).unfocus();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const AdminShell(),
+          settings: const RouteSettings(name: '/admin'),
+        ),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
 
