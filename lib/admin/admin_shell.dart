@@ -5,6 +5,7 @@ import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 import '../core/theme/app_typography.dart';
 import '../widgets/brand_mark.dart';
+import 'consejo/consejo_screen.dart';
 import 'core/secciones_admin.dart';
 import 'data/datos_demo_admin.dart';
 import 'validar/bandeja_screen.dart';
@@ -29,6 +30,7 @@ class _AdminShellState extends State<AdminShell> {
 
   Widget get _contenido => switch (_seccion) {
         SeccionAdmin.validar => const BandejaScreen(),
+        SeccionAdmin.consejo => const ConsejoScreen(),
         _ => _EnConstruccion(seccion: _seccion),
       };
 
