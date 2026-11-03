@@ -54,14 +54,13 @@ class _TextosScreenState extends State<TextosScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'El periodo ya no se escribe a mano',
+                      'El periodo es una variable',
                       style: AppTypography.titleLarge.copyWith(fontSize: 15),
                     ),
                     const SizedBox(height: AppSpacing.xxs),
                     Text(
-                      'Donde antes decía "27/1" ahora va {periodo}, y se '
-                      'resuelve al imprimir con el periodo activo. Ya no hay '
-                      'que corregir los doce textos cada semestre.',
+                      'Se resuelve al imprimir con el periodo activo. No hay '
+                      'que corregir los textos cada semestre.',
                       style: AppTypography.bodyMedium.copyWith(
                         color: AppColors.inkSecondary,
                         height: 1.55,
@@ -237,7 +236,7 @@ class _EditarTextoScreenState extends State<EditarTextoScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Cómo lo nombras', style: AppTypography.label),
+                  Text('Título', style: AppTypography.label),
                   const SizedBox(height: AppSpacing.xs),
                   TextField(
                     controller: _titulo,
@@ -247,8 +246,7 @@ class _EditarTextoScreenState extends State<EditarTextoScreen> {
                   Text('El párrafo', style: AppTypography.label),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
-                    'La redacción es la que aprobó el consejo; no se cambia a '
-                    'la ligera. Lo único que conviene tocar son las variables.',
+                    'Redacción aprobada por el consejo.',
                     style: AppTypography.hint.copyWith(height: 1.45),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -388,7 +386,7 @@ class _VistaSiguientePeriodo extends StatelessWidget {
                   size: 15, color: AppColors.successInk),
               const SizedBox(width: 6),
               Text(
-                'Y EL SEMESTRE QUE ENTRA ($siguiente), SIN TOCAR NADA',
+                'EL SIGUIENTE ($siguiente), SIN TOCAR NADA',
                 style: AppTypography.overline
                     .copyWith(color: AppColors.successInk),
               ),

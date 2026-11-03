@@ -316,8 +316,7 @@ class _FichaAlumno extends StatelessWidget {
           if (e.creditos != null || e.promedio != null) ...[
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'El alumno captura estos a mano desde el SAES. Nadie los valida '
-              'contra nada.',
+              'Capturado por el alumno desde el SAES.',
               style: AppTypography.hint.copyWith(height: 1.4),
             ),
           ],
@@ -906,8 +905,7 @@ class _Comentario extends StatelessWidget {
         Text('Qué tiene que corregir', style: AppTypography.label),
         const SizedBox(height: AppSpacing.xxs),
         Text(
-          'Es lo único que el alumno va a recibir. Si no dice qué está mal, '
-          'va a venir a preguntar a la ventanilla.',
+          'Es lo que va a leer el alumno.',
           style: AppTypography.hint.copyWith(height: 1.4),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -917,17 +915,13 @@ class _Comentario extends StatelessWidget {
           maxLines: 3,
           textCapitalization: TextCapitalization.sentences,
           decoration: const InputDecoration(
-            hintText: 'Por ejemplo: el comprobante está a nombre de otra '
-                'persona, sube el que tenga tu boleta.',
+            hintText: 'Qué está mal y qué tiene que hacer.',
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
         // Lo que se repite se elige, no se teclea. Mismo principio que los
         // doce textos del dictamen que ya usa el Consejo Técnico.
-        Text(
-          'O usa uno de los de siempre:',
-          style: AppTypography.hint,
-        ),
+        Text('Frecuentes:', style: AppTypography.hint),
         const SizedBox(height: AppSpacing.xs),
         Wrap(
           spacing: AppSpacing.xs,

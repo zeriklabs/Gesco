@@ -272,7 +272,7 @@ class _DictaminarScreenState extends State<DictaminarScreen> {
                       style: AppTypography.displaySmall),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
-                    'Elige el texto viendo lo que de verdad se va a imprimir.',
+                    'El párrafo que se imprime.',
                     style: AppTypography.bodyMedium
                         .copyWith(color: AppColors.inkSecondary),
                   ),
@@ -290,9 +290,7 @@ class _DictaminarScreenState extends State<DictaminarScreen> {
                   Text('Nota 3', style: AppTypography.label),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
-                    'El texto libre que acompaña al dictamen. Lo llené con las '
-                    'materias que ya están en su expediente; corrígelo si hace '
-                    'falta.',
+                    'Prellenada con las materias de su expediente.',
                     style: AppTypography.hint.copyWith(height: 1.45),
                   ),
                   const SizedBox(height: AppSpacing.sm),

@@ -85,7 +85,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             label: 'Fecha de la sesión',
             controller: _fecha,
             onChanged: (_) => setState(() {}),
-            helperText: 'Como quieres que salga escrita en el documento.',
+            helperText: 'Tal como sale impresa.',
           ),
           const SizedBox(height: AppSpacing.md),
           GescoTextField(
@@ -100,7 +100,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             controller: _abreviado,
             isRequired: true,
             onChanged: (_) => setState(() {}),
-            helperText: 'El que cabe en el encabezado, por ejemplo 2DA. EXT.',
+            helperText: 'Para el encabezado. Ej. 2DA. EXT.',
           ),
           const SizedBox(height: AppSpacing.md),
           GescoTextField(
@@ -260,8 +260,7 @@ class _HojaEjemplo extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'Las barras grises son el dictamen de cada alumno, que cambia; lo '
-          'demás es igual en todos.',
+          'Las barras grises cambian por alumno; lo demás es fijo.',
           style: AppTypography.hint.copyWith(height: 1.45),
         ),
       ],
