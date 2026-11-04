@@ -38,13 +38,19 @@ enum TipoTramiteAlumno {
 
 /// En qué etapa va un expediente. Son las tres tablas de la pantalla actual.
 enum EtapaExpediente {
-  esperandoRevision('Esperando revisión'),
-  corrigiendo('Corrigiendo observaciones'),
-  validado('Validado');
+  esperandoRevision('Esperando revisión', 'Esperando revisión'),
+  corrigiendo('Corrigiendo observaciones', 'Corrigiendo'),
+  validado('Validado', 'Validado');
 
-  const EtapaExpediente(this.etiqueta);
+  const EtapaExpediente(this.etiqueta, this.corta);
 
+  /// Como encabezado de tabla, donde hay espacio.
   final String etiqueta;
+
+  /// Dentro de una pastilla, en una columna angosta. "Corrigiendo
+  /// observaciones" no cabe en un renglón de reporte y parte en dos líneas,
+  /// que desalinea toda la tabla.
+  final String corta;
 }
 
 /// Lo que el revisor decide sobre un documento.
