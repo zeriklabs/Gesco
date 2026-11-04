@@ -5,6 +5,7 @@ import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 import '../core/theme/app_typography.dart';
 import '../widgets/brand_mark.dart';
+import '../features/auth/login_screen.dart';
 import 'catalogos/catalogos_screen.dart';
 import 'consejo/consejo_screen.dart';
 import 'core/secciones_admin.dart';
@@ -301,7 +302,12 @@ class _ChipUsuario extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (_) => false,
+              );
+            },
             tooltip: 'Cerrar sesión',
             icon: const Icon(Icons.logout_rounded, size: 18),
             color: AppColors.onGuindaFaint,

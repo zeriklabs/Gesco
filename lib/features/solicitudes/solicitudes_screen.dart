@@ -64,19 +64,17 @@ class SolicitudesScreen extends StatelessWidget {
                 for (var i = 0; i < tarjetas.length; i += 2)
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.sm + 2),
-                    child: IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: tarjetas[i]),
-                          const SizedBox(width: AppSpacing.sm + 2),
-                          Expanded(
-                            child: i + 1 < tarjetas.length
-                                ? tarjetas[i + 1]
-                                : const SizedBox.shrink(),
-                          ),
-                        ],
-                      ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: tarjetas[i]),
+                        const SizedBox(width: AppSpacing.sm + 2),
+                        Expanded(
+                          child: i + 1 < tarjetas.length
+                              ? tarjetas[i + 1]
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
                     ),
                   ),
               ],

@@ -105,33 +105,31 @@ class _ExpedienteScreenState extends State<ExpedienteScreen> {
                     for (var i = 0; i < SeccionExpediente.values.length; i += 2)
                       Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                        child: IntrinsicHeight(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                child: _TarjetaSeccion(
-                                  seccion: SeccionExpediente.values[i],
-                                  resumen: expediente
-                                      .secciones[SeccionExpediente.values[i]],
-                                  onActualizar: () => setState(() {}),
-                                ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _TarjetaSeccion(
+                                seccion: SeccionExpediente.values[i],
+                                resumen: expediente
+                                    .secciones[SeccionExpediente.values[i]],
+                                onActualizar: () => setState(() {}),
                               ),
-                              const SizedBox(width: AppSpacing.md),
-                              Expanded(
-                                child: i + 1 <
-                                        SeccionExpediente.values.length
-                                    ? _TarjetaSeccion(
-                                        seccion:
-                                            SeccionExpediente.values[i + 1],
-                                        resumen: expediente.secciones[
-                                            SeccionExpediente.values[i + 1]],
-                                        onActualizar: () => setState(() {}),
-                                      )
-                                    : const SizedBox.shrink(),
-                              ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: i + 1 <
+                                      SeccionExpediente.values.length
+                                  ? _TarjetaSeccion(
+                                      seccion:
+                                          SeccionExpediente.values[i + 1],
+                                      resumen: expediente.secciones[
+                                          SeccionExpediente.values[i + 1]],
+                                      onActualizar: () => setState(() {}),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ],
                         ),
                       ),
                   ],

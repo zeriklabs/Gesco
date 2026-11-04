@@ -64,21 +64,19 @@ class InicioScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           _BloqueDocumentos(tramites: tramites, onIr: onIr),
         ] else
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: _BloqueSolicitudes(tramites: tramites, onIr: onIr),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  flex: 2,
-                  child: _BloqueDocumentos(tramites: tramites, onIr: onIr),
-                ),
-              ],
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: _BloqueSolicitudes(tramites: tramites, onIr: onIr),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                flex: 2,
+                child: _BloqueDocumentos(tramites: tramites, onIr: onIr),
+              ),
+            ],
           ),
       ],
     );

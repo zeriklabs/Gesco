@@ -28,13 +28,45 @@ class _HomeScreenState extends State<HomeScreen> {
   Seccion _seccion = Seccion.inicio;
   bool _railHovered = false;
 
+  late final Map<Seccion, Widget> _pantallas;
+
+  @override
+  void initState() {
+    super.initState();
+    _pantallas = {
+      Seccion.inicio: InicioScreen(onIr: _ir),
+      Seccion.expediente: ExpedienteScreen(onIr: _ir),
+      Seccion.solicitudes: SolicitudesScreen(onIr: _ir),
+    };
+  }
+
   void _ir(Seccion destino) => setState(() => _seccion = destino);
 
-  Widget get _contenido => switch (_seccion) {
-    Seccion.inicio => InicioScreen(onIr: _ir),
-    Seccion.expediente => ExpedienteScreen(onIr: _ir),
-    Seccion.solicitudes => SolicitudesScreen(onIr: _ir),
-  };
+  Widget get _contenido => _pantallas[_seccion]!;
+
+  Widget _buildTransicionContenido() {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.012, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey<Seccion>(_seccion),
+        child: _contenido,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,68 +77,78 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               children: [
                 const SizedBox(width: 80),
-                Expanded(child: SafeArea(child: _contenido)),
+                Expanded(
+                  child: SafeArea(
+                    child: RepaintBoundary(
+                      child: _buildTransicionContenido(),
+                    ),
+                  ),
+                ),
               ],
             ),
             Positioned(
               top: 0,
               bottom: 0,
               left: 0,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-                width: _railHovered ? AppSize.sidebarWidth : 80.0,
-                child: MouseRegion(
-                  onEnter: (_) => setState(() => _railHovered = true),
-                  onExit: (_) => setState(() => _railHovered = false),
-                  child: Material(
-                    elevation: _railHovered ? 8 : 0,
-                    color: AppColors.guinda,
-                    child: ClipRect(
-                      child: OverflowBox(
-                        alignment: Alignment.topLeft,
-                        minWidth: AppSize.sidebarWidth,
-                        maxWidth: AppSize.sidebarWidth,
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              top: 0,
-                              bottom: 0,
-                              left: 0,
-                              width: 80,
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 150),
-                                opacity: _railHovered ? 0.0 : 1.0,
-                                child: IgnorePointer(
-                                  ignoring: _railHovered,
-                                  child: _MenuLateralRail(
-                                    actual: _seccion,
-                                    onSeleccionar: _ir,
+              child: RepaintBoundary(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.fastOutSlowIn,
+                  width: _railHovered ? AppSize.sidebarWidth : 80.0,
+                  child: MouseRegion(
+                    onEnter: (_) => setState(() => _railHovered = true),
+                    onExit: (_) => setState(() => _railHovered = false),
+                    child: Material(
+                      elevation: _railHovered ? 8 : 0,
+                      color: AppColors.guinda,
+                      child: ClipRect(
+                        child: OverflowBox(
+                          alignment: Alignment.topLeft,
+                          minWidth: AppSize.sidebarWidth,
+                          maxWidth: AppSize.sidebarWidth,
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                top: 0,
+                                bottom: 0,
+                                left: 0,
+                                width: 80,
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 220),
+                                  curve: Curves.easeInOut,
+                                  opacity: _railHovered ? 0.0 : 1.0,
+                                  child: IgnorePointer(
+                                    ignoring: _railHovered,
+                                    child: _MenuLateralRail(
+                                      actual: _seccion,
+                                      onSeleccionar: _ir,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            Positioned(
-                              top: 0,
-                              bottom: 0,
-                              left: 0,
-                              width: AppSize.sidebarWidth,
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 150),
-                                opacity: _railHovered ? 1.0 : 0.0,
-                                child: IgnorePointer(
-                                  ignoring: !_railHovered,
-                                  child: _MenuLateral(
-                                    actual: _seccion,
-                                    onSeleccionar: (s) {
-                                      _ir(s);
-                                      setState(() => _railHovered = false);
-                                    },
+                              Positioned(
+                                top: 0,
+                                bottom: 0,
+                                left: 0,
+                                width: AppSize.sidebarWidth,
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 220),
+                                  curve: Curves.easeInOut,
+                                  opacity: _railHovered ? 1.0 : 0.0,
+                                  child: IgnorePointer(
+                                    ignoring: !_railHovered,
+                                    child: _MenuLateral(
+                                      actual: _seccion,
+                                      onSeleccionar: (s) {
+                                        _ir(s);
+                                        setState(() => _railHovered = false);
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -120,7 +162,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      body: SafeArea(bottom: false, child: _contenido),
+      body: SafeArea(
+        bottom: false,
+        child: RepaintBoundary(
+          child: _buildTransicionContenido(),
+        ),
+      ),
       bottomNavigationBar: _BarraInferior(actual: _seccion, onSeleccionar: _ir),
     );
   }
@@ -195,37 +242,48 @@ class _ItemMenu extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
-      child: Material(
-        color: activo ? AppColors.surface : Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.sm + 1),
-        child: InkWell(
-          onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          color: activo ? AppColors.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.sm + 1),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  activo ? seccion.iconoActivo : seccion.icono,
-                  size: 19,
-                  color: color,
-                ),
-                const SizedBox(width: AppSpacing.sm + 1),
-                Expanded(
-                  child: Text(
-                    seccion.titulo,
-                    style: AppTypography.bodyMedium.copyWith(
-                      fontSize: 14.5,
-                      fontWeight: activo ? FontWeight.w700 : FontWeight.w600,
-                      color: color,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.sm + 1),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppRadius.sm + 1),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    activo ? seccion.iconoActivo : seccion.icono,
+                    size: 19,
+                    color: color,
                   ),
-                ),
-              ],
+                  const SizedBox(width: AppSpacing.sm + 1),
+                  Expanded(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontSize: 14.5,
+                        fontWeight: activo ? FontWeight.w700 : FontWeight.w600,
+                        color: color,
+                      ),
+                      child: Text(
+                        seccion.titulo,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
