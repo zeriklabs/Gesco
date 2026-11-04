@@ -100,8 +100,6 @@ class _MenuLateral extends StatelessWidget {
                 child: BrandMark(),
               ),
               const SizedBox(height: AppSpacing.md),
-              const _EtiquetaCuenta(),
-              const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
@@ -127,38 +125,7 @@ class _MenuLateral extends StatelessWidget {
   }
 }
 
-/// La franja que dice en qué lado del sistema estás.
-class _EtiquetaCuenta extends StatelessWidget {
-  const _EtiquetaCuenta();
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.dorado,
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.shield_outlined, size: 14, color: Color(0xFF3A2404)),
-          const SizedBox(width: 6),
-          Text(
-            'GESTIÓN ESCOLAR',
-            style: AppTypography.overline.copyWith(
-              fontSize: 10,
-              color: const Color(0xFF3A2404),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _ItemMenu extends StatelessWidget {
   const _ItemMenu({
@@ -276,7 +243,7 @@ class _ChipUsuario extends StatelessWidget {
               border: Border.all(color: AppColors.overlayBorderOnGuinda),
             ),
             alignment: Alignment.center,
-            child: const Icon(Icons.person_outline_rounded,
+            child: const Icon(Icons.shield_outlined,
                 size: 19, color: AppColors.onGuinda),
           ),
           const SizedBox(width: AppSpacing.sm),
