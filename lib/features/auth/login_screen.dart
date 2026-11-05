@@ -214,14 +214,60 @@ class _LoginScreenState extends State<LoginScreen> {
                     top: Radius.circular(AppRadius.sheet),
                   ),
                 ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.gutterMobile,
-                    AppSpacing.md,
-                    AppSpacing.gutterMobile,
-                    AppSpacing.xl,
-                  ),
-                  child: _formulario(compacto: true),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.gutterMobile,
+                          AppSpacing.md,
+                          AppSpacing.gutterMobile,
+                          AppSpacing.md,
+                        ),
+                        child: _formulario(compacto: true),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.gutterMobile,
+                        AppSpacing.sm,
+                        AppSpacing.gutterMobile,
+                        AppSpacing.md,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        border: Border(
+                          top: BorderSide(color: AppColors.border, width: 1),
+                        ),
+                      ),
+                      child: SafeArea(
+                        top: false,
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _cargando ? null : _entrar,
+                            child: _cargando
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.4,
+                                      color: AppColors.onGuinda,
+                                    ),
+                                  )
+                                : const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text('Entrar'),
+                                      SizedBox(width: AppSpacing.xs),
+                                      Icon(Icons.arrow_forward_rounded, size: 20),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -337,30 +383,32 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             SizedBox(height: compacto ? AppSpacing.sm : AppSpacing.md),
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _cargando ? null : _entrar,
-                child: _cargando
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.4,
-                          color: AppColors.onGuinda,
+            if (!compacto) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _cargando ? null : _entrar,
+                  child: _cargando
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.4,
+                            color: AppColors.onGuinda,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('Entrar'),
+                            SizedBox(width: AppSpacing.xs),
+                            Icon(Icons.arrow_forward_rounded, size: 20),
+                          ],
                         ),
-                      )
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('Entrar'),
-                          SizedBox(width: AppSpacing.xs),
-                          Icon(Icons.arrow_forward_rounded, size: 20),
-                        ],
-                      ),
+                ),
               ),
-            ),
-            SizedBox(height: compacto ? AppSpacing.md : AppSpacing.xxl),
+              SizedBox(height: compacto ? AppSpacing.md : AppSpacing.xxl),
+            ],
 
             _TarjetaCrearCuenta(onPressed: _irARegistro, compacta: compacto),
           ],
