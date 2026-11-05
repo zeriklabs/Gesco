@@ -13,6 +13,35 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 bool _dialogoExpiradoAbierto = false;
 
+class AuthRouteObserver extends NavigatorObserver {
+  static bool isOnAuthScreen = true;
+
+  void _update(Route<dynamic>? route) {
+    if (route != null) {
+      final name = route.settings.name;
+      isOnAuthScreen = name == '/login' || name == '/registro' || name == null;
+    }
+  }
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    _update(route);
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    _update(previousRoute);
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    _update(newRoute);
+  }
+}
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -51,15 +80,10 @@ class GescoApp extends StatelessWidget {
 
   void _manejadorSesionExpirada() {
     if (_dialogoExpiradoAbierto) return;
+    if (AuthRouteObserver.isOnAuthScreen) return;
 
     final context = navigatorKey.currentContext;
     if (context == null) return;
-
-    final ModalRoute<dynamic>? route = ModalRoute.of(context);
-    final String? routeName = route?.settings.name;
-
-    // No mostrar diálogo si el usuario ya se encuentra en Login o Registro
-    if (routeName == '/login' || routeName == '/registro') return;
 
     _dialogoExpiradoAbierto = true;
 
@@ -111,6 +135,7 @@ class GescoApp extends StatelessWidget {
       onTimeout: _manejadorSesionExpirada,
       child: MaterialApp(
         navigatorKey: navigatorKey,
+        navigatorObservers: [AuthRouteObserver()],
         title: 'GESCO · Gestión Escolar UPIIZ',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
@@ -130,7 +155,9 @@ class GescoApp extends StatelessWidget {
           }
           return null;
         },
-        home: const LoginScreen(),
+        home: const LoginScreen(
+          key: ValueKey('login-screen-home'),
+        ),
       ),
     );
   }
