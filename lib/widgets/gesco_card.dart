@@ -286,7 +286,7 @@ class TituloBloque extends StatelessWidget {
           insignia!,
         ],
         const Spacer(),
-        if (accion != null) accion!,
+        ?accion,
       ],
     );
   }

@@ -93,7 +93,7 @@ class IpnLogo extends StatelessWidget {
       color: onDark ? null : AppColors.guinda,
       colorBlendMode: onDark ? null : BlendMode.srcIn,
       semanticLabel: 'Instituto Politécnico Nacional',
-      errorBuilder: (_, __, ___) => Icon(
+      errorBuilder: (_, _, _) => Icon(
         Icons.school_outlined,
         size: height * 0.8,
         color: onDark ? AppColors.onGuinda : AppColors.guinda,
@@ -119,7 +119,7 @@ class UpiizLogo extends StatelessWidget {
       height: size,
       fit: BoxFit.contain,
       semanticLabel: 'Unidad Interdisciplinaria de Ingeniería Campus Zacatecas',
-      errorBuilder: (_, __, ___) => Icon(
+      errorBuilder: (_, _, _) => Icon(
         Icons.account_balance_outlined,
         size: size * 0.6,
         color: AppColors.guinda,

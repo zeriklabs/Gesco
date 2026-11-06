@@ -151,6 +151,9 @@ class _FilaAdeudo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final desfasada = adeudo.estaDesfasada(DatosDemo.periodoActual);
+    final enLimite = adeudo.enLimiteDictamen(DatosDemo.periodoActual);
+
     return GescoCard(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.md + 2,
@@ -165,25 +168,41 @@ class _FilaAdeudo extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  adeudo.unidadAprendizaje,
-                  style: AppTypography.bodyLarge.copyWith(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        adeudo.unidadAprendizaje,
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 5),
                 Wrap(
                   spacing: AppSpacing.xs,
                   runSpacing: AppSpacing.xxs,
                   children: [
+                    if (desfasada)
+                      const _Etiqueta(
+                        texto: '¡DESFASADA - REQUIERE DICTAMEN!',
+                        peligrosa: true,
+                      )
+                    else if (enLimite)
+                      const _Etiqueta(
+                        texto: 'Límite 1 año (2 periodos)',
+                        destacada: true,
+                      ),
                     _Etiqueta(texto: adeudo.nivel),
                     _Etiqueta(
                       texto: 'Reprobada en ${adeudo.periodoReprobada}',
                     ),
                     if (adeudo.semestreReprobada != null)
                       _Etiqueta(texto: '${adeudo.semestreReprobada} semestre'),
-                    _Etiqueta(texto: adeudo.estado, destacada: true),
+                    _Etiqueta(texto: adeudo.estado, destacada: !desfasada),
                   ],
                 ),
               ],
@@ -203,23 +222,40 @@ class _FilaAdeudo extends StatelessWidget {
 }
 
 class _Etiqueta extends StatelessWidget {
-  const _Etiqueta({required this.texto, this.destacada = false});
+  const _Etiqueta({
+    required this.texto,
+    this.destacada = false,
+    this.peligrosa = false,
+  });
 
   final String texto;
   final bool destacada;
+  final bool peligrosa;
 
   @override
   Widget build(BuildContext context) {
+    final fondo = peligrosa
+        ? AppColors.danger
+        : destacada
+            ? AppColors.dangerTint
+            : AppColors.surfaceMuted;
+    final textoColor = peligrosa
+        ? Colors.white
+        : destacada
+            ? AppColors.guinda
+            : AppColors.inkSecondary;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: destacada ? AppColors.dangerTint : AppColors.surfaceMuted,
+        color: fondo,
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
         texto,
         style: AppTypography.pill.copyWith(
-          color: destacada ? AppColors.guinda : AppColors.inkSecondary,
+          color: textoColor,
+          fontWeight: peligrosa ? FontWeight.w800 : FontWeight.w600,
         ),
       ),
     );
@@ -335,6 +371,9 @@ class _TarjetaCuentas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final desfasadas = adeudos
+        .where((a) => a.estaDesfasada(DatosDemo.periodoActual))
+        .length;
     final recursadas = adeudos
         .where((a) => a.estado.toUpperCase().contains('RECURSA'))
         .length;
@@ -343,6 +382,7 @@ class _TarjetaCuentas extends StatelessWidget {
 
     final cuentas = [
       ('Materias que debes', adeudos.length),
+      ('Materias desfasadas (Dictamen)', desfasadas),
       ('Materias en recursamiento', recursadas),
       ('Materias en E.T.S.', ets),
     ];

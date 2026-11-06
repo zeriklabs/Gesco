@@ -41,6 +41,7 @@ class _CompletarDatosEscolaresScreenState
   String? _tipoCarga = 'Media';
   final _promedioSaes = TextEditingController(text: '8.45');
   bool _cuentaConDictamen = false;
+  String _tipoDictamenCosie = 'Consejo Técnico (CT)';
   bool _provieneDeBaja = false;
 
   final List<Adeudo> _adeudos = List.from(DatosDemo.adeudos);
@@ -200,6 +201,7 @@ class _CompletarDatosEscolaresScreenState
             SeccionForm(titulo: 'Tu programa'),
             const SizedBox(height: AppSpacing.sm),
             CamposEnFila(
+              anchoMinimo: 560,
               children: [
                 GescoSelect<String>(
                   label: 'Carrera',
@@ -227,7 +229,6 @@ class _CompletarDatosEscolaresScreenState
                   validator: (v) => v == null ? 'Elige el plan' : null,
                 ),
               ],
-              anchoMinimo: 560,
             ),
             const SizedBox(height: AppSpacing.lg),
 
@@ -424,7 +425,7 @@ class _CompletarDatosEscolaresScreenState
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Al registrarte por debajo de la carga mínima se requiere un oficio de autorización emitido por la Dirección de la unidad académica.',
+                        'Al registrarte por debajo de la carga mínima se requieren el oficio de autorización de la Dirección y el dictamen emitido por el COSIE o CT.',
                         style: AppTypography.bodySmall
                             .copyWith(color: AppColors.inkSecondary),
                       ),
@@ -476,16 +477,30 @@ class _CompletarDatosEscolaresScreenState
 
               if (_cuentaConDictamen) ...[
                 const SizedBox(height: AppSpacing.sm),
+                GescoSelect<String>(
+                  label: 'Tipo de dictamen COSIE',
+                  value: _tipoDictamenCosie,
+                  opciones: const [
+                    'Consejo Técnico (CT)',
+                    'Consejo General (CG)',
+                  ],
+                  onChanged: (v) {
+                    if (v != null) setState(() => _tipoDictamenCosie = v);
+                  },
+                ),
+                const SizedBox(height: AppSpacing.sm),
                 GescoCard(
                   color: AppColors.surfaceAlt,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Sección de Dictamen de COSIE',
-                          style: AppTypography.titleLarge),
+                      Text(
+                        'Sección de Dictamen de COSIE (${_tipoDictamenCosie.contains('General') ? 'Consejo General' : 'Consejo Técnico'})',
+                        style: AppTypography.titleLarge,
+                      ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Se adjuntará la copia de tu dictamen en los trámites que lo requieran.',
+                        'Se adjuntará la copia de tu dictamen (${_tipoDictamenCosie.contains('General') ? 'CG' : 'CT'}) en los trámites que lo requieran.',
                         style: AppTypography.bodySmall,
                       ),
                       const SizedBox(height: AppSpacing.sm),

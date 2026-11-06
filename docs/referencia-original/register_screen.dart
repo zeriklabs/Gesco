@@ -1439,14 +1439,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildInlineDropdown({required String label, required String? value, required List<String> items, required ValueChanged<String?> onChanged, bool isRequired = true, String? hintText}) {
     final isMobile = MediaQuery.of(context).size.width < 600;
-    final field = DropdownButtonFormField<String>(value: value, isExpanded: true, decoration: _inputDecoration(hintText: hintText), items: items.map((i) => DropdownMenuItem(value: i, child: Text(i, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis))).toList(), onChanged: onChanged, validator: (val) => (isRequired && (val == null || val.isEmpty)) ? 'Campo requerido' : null);
+    final field = DropdownButtonFormField<String>(initialValue: value, isExpanded: true, decoration: _inputDecoration(hintText: hintText), items: items.map((i) => DropdownMenuItem(value: i, child: Text(i, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis))).toList(), onChanged: onChanged, validator: (val) => (isRequired && (val == null || val.isEmpty)) ? 'Campo requerido' : null);
     return isMobile ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_buildLabelWidget(label, isRequired: isRequired), const SizedBox(height: 6), field])
                     : Row(children: [_buildLabelWidget(label, isRequired: isRequired), const SizedBox(width: 8), Expanded(child: field)]);
   }
 
   Widget _buildLabeledDropdown({required String label, required String? value, required List<String> items, required ValueChanged<String?> onChanged, bool isRequired = true, String? hintText}) {
     final isMobile = MediaQuery.of(context).size.width < 600;
-    final field = DropdownButtonFormField<String>(value: value, isExpanded: true, decoration: _inputDecoration(hintText: hintText), items: items.map((i) => DropdownMenuItem(value: i, child: Text(i, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis))).toList(), onChanged: onChanged, validator: (val) => (isRequired && (val == null || val.isEmpty)) ? 'Campo requerido' : null);
+    final field = DropdownButtonFormField<String>(initialValue: value, isExpanded: true, decoration: _inputDecoration(hintText: hintText), items: items.map((i) => DropdownMenuItem(value: i, child: Text(i, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis))).toList(), onChanged: onChanged, validator: (val) => (isRequired && (val == null || val.isEmpty)) ? 'Campo requerido' : null);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14.0),
       child: isMobile ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_buildLabelWidget(label, isRequired: isRequired), const SizedBox(height: 6), field])

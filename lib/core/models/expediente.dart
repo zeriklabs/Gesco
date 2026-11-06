@@ -41,6 +41,36 @@ class Adeudo {
   final String estado;
 }
 
+/// Extensión para calcular el desfase por tiempo de un adeudo (regla de 1 año / 2 periodos en IPN).
+extension AdeudoCalculo on Adeudo {
+  /// Convierte un periodo IPN (ej. '25/2' o '27/1') a un entero continuo para comparar.
+  static int valorPeriodo(String p) {
+    final partes = p.split('/');
+    if (partes.length < 2) return 0;
+    final anio = int.tryParse(partes[0]) ?? 0;
+    final sem = int.tryParse(partes[1]) ?? 0;
+    return anio * 2 + sem;
+  }
+
+  /// Calcula cuántos periodos escolares han pasado desde que la reprobó.
+  int periodosTranscurridos(String periodoActual) {
+    final vActual = valorPeriodo(periodoActual);
+    final vRepro = valorPeriodo(periodoReprobada);
+    if (vActual <= 0 || vRepro <= 0) return 0;
+    return (vActual - vRepro).clamp(0, 99);
+  }
+
+  /// Indica si la materia ya superó los 2 periodos (1 año escolar) sin ser acreditada.
+  bool estaDesfasada(String periodoActual) {
+    return periodosTranscurridos(periodoActual) > 2;
+  }
+
+  /// Indica si la materia está en su segundo periodo (1 año exacto), límite reglamentario.
+  bool enLimiteDictamen(String periodoActual) {
+    return periodosTranscurridos(periodoActual) == 2;
+  }
+}
+
 /// El estado del expediente de un alumno.
 class Expediente {
   const Expediente({
@@ -61,6 +91,14 @@ class Expediente {
   int get totalSecciones => SeccionExpediente.values.length;
 
   bool get estaCompleto => seccionesCompletas == totalSecciones;
+
+  /// Adeudos que superaron 1 año (2 periodos) sin acreditarse y requieren Dictamen.
+  List<Adeudo> adeudosDesfasados(String periodoActual) =>
+      adeudos.where((a) => a.estaDesfasada(periodoActual)).toList();
+
+  /// Adeudos en el límite de 1 año (2 periodos).
+  List<Adeudo> adeudosEnLimite(String periodoActual) =>
+      adeudos.where((a) => a.enLimiteDictamen(periodoActual)).toList();
 
   /// Las que le faltan, en orden. Es lo que se le dice al alumno en el inicio.
   List<SeccionExpediente> get pendientes => [

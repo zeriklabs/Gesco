@@ -63,6 +63,7 @@ class _PasoPersonalesState extends State<PasoPersonales> {
           const SeccionForm(titulo: 'Identidad', nota: '* obligatorio'),
 
           CamposEnFila(
+            anchoMinimo: 560,
             children: [
               GescoTextField(
                 label: 'Nombre(s)',
@@ -85,7 +86,6 @@ class _PasoPersonalesState extends State<PasoPersonales> {
                 textCapitalization: TextCapitalization.characters,
               ),
             ],
-            anchoMinimo: 560,
           ),
           const SizedBox(height: AppSpacing.lg),
 
@@ -123,6 +123,7 @@ class _PasoPersonalesState extends State<PasoPersonales> {
           const SizedBox(height: AppSpacing.lg),
 
           CamposEnFila(
+            anchoMinimo: 560,
             children: [
               GescoTextField(
                 label: 'RFC',
@@ -149,7 +150,6 @@ class _PasoPersonalesState extends State<PasoPersonales> {
                 hintText: '—',
               ),
             ],
-            anchoMinimo: 560,
           ),
 
           if (curpListo) ...[
@@ -225,6 +225,7 @@ class _PasoPersonalesState extends State<PasoPersonales> {
           const SeccionForm(titulo: 'Domicilio actual'),
 
           CamposEnFila(
+            anchoMinimo: 560,
             children: [
               GescoTextField(
                 label: 'Código postal',
@@ -279,7 +280,6 @@ class _PasoPersonalesState extends State<PasoPersonales> {
                 validator: (v) => v == null ? 'Elige tu municipio' : null,
               ),
             ],
-            anchoMinimo: 560,
           ),
           const SizedBox(height: AppSpacing.lg),
 
@@ -361,6 +361,7 @@ class _PasoPersonalesState extends State<PasoPersonales> {
 
           CamposEnFila(
             flex: const [2, 1, 1],
+            anchoMinimo: 520,
             children: [
               GescoTextField(
                 label: 'Calle',
@@ -382,7 +383,6 @@ class _PasoPersonalesState extends State<PasoPersonales> {
                 hintText: 'Opcional',
               ),
             ],
-            anchoMinimo: 520,
           ),
         ],
       ),

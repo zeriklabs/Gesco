@@ -56,6 +56,11 @@ class InicioScreen extends StatelessWidget {
           ),
         const SizedBox(height: AppSpacing.lg),
 
+        _TarjetaAlertaDictamen(expediente: expediente, onIr: onIr),
+
+        _TarjetaPermanenciaEscolar(onIr: onIr),
+        const SizedBox(height: AppSpacing.lg),
+
         _TarjetaExpediente(expediente: expediente, onIr: onIr),
         const SizedBox(height: AppSpacing.lg),
 
@@ -518,6 +523,247 @@ class _BloqueDocumentos extends StatelessWidget {
               label: const Text('Ir al trámite que los pide'),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, AppSize.touchTarget),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tarjeta de aviso de materias desfasadas o límite de permanencia que requieren Dictamen de COSIE.
+class _TarjetaAlertaDictamen extends StatelessWidget {
+  const _TarjetaAlertaDictamen({
+    required this.expediente,
+    required this.onIr,
+  });
+
+  final Expediente expediente;
+  final IrASeccion onIr;
+
+  @override
+  Widget build(BuildContext context) {
+    final desfasadas = expediente.adeudosDesfasados(DatosDemo.periodoActual);
+    final enLimite = expediente.adeudosEnLimite(DatosDemo.periodoActual);
+    final requiereExtension = DatosDemo.requiereExtensionDeTiempo;
+    final enRiesgoExtension = DatosDemo.enRiesgoExtensionDeTiempo;
+
+    if (desfasadas.isEmpty &&
+        enLimite.isEmpty &&
+        !requiereExtension &&
+        !enRiesgoExtension) {
+      return const SizedBox.shrink();
+    }
+
+    final esCritica = desfasadas.isNotEmpty || requiereExtension;
+
+    String titulo = 'ALERTA ACADÉMICA';
+    String subtitulo = '';
+    String detalle = '';
+
+    if (requiereExtension) {
+      titulo = 'ACCIÓN REQUERIDA · DICTAMEN DE EXTENSIÓN DE TIEMPO';
+      subtitulo = 'Límite de semestres alcanzado';
+      detalle =
+          'Has cursado ${DatosDemo.semestresTranscurridos} semestres de los ${DatosDemo.semestresMaximosCarrera} máximos permitidos para ${DatosDemo.carrera}. '
+          'Por reglamento del IPN, requieres tramitar un Dictamen de Extensión de Tiempo ante el COSIE para continuar.';
+    } else if (desfasadas.isNotEmpty) {
+      final m = desfasadas.first;
+      final p = m.periodosTranscurridos(DatosDemo.periodoActual);
+      titulo = 'ACCIÓN REQUERIDA · DICTAMEN POR DESFASE';
+      subtitulo = m.unidadAprendizaje;
+      detalle =
+          'Reprobada en ${m.periodoReprobada} ($p periodos / > 1 año sin acreditar). '
+          'Por reglamento del IPN, esta materia ya requiere Dictamen de COSIE para tu reinscripción.';
+    } else if (enRiesgoExtension) {
+      titulo = 'ALERTA DE PERMANENCIA PRÓXIMA A VENCER';
+      subtitulo = 'Queda ${DatosDemo.semestresRestantes} semestre reglamentario';
+      detalle =
+          'Llevas ${DatosDemo.semestresTranscurridos} de ${DatosDemo.semestresMaximosCarrera} semestres máximos cursados en ${DatosDemo.carrera}. '
+          'Estás cerca del límite reglamentario antes de requerir Dictamen de Extensión de Tiempo.';
+    } else if (enLimite.isNotEmpty) {
+      final m = enLimite.first;
+      final p = m.periodosTranscurridos(DatosDemo.periodoActual);
+      titulo = 'ALERTA DE DESFASE PRÓXIMO';
+      subtitulo = m.unidadAprendizaje;
+      detalle =
+          'Reprobada en ${m.periodoReprobada} ($p periodos / 1 año). '
+          'Estás en el último periodo reglamentario para acreditarla antes de requerir Dictamen de COSIE.';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: GescoCard(
+        color: esCritica ? AppColors.dangerTint : AppColors.surfaceAlt,
+        colorBorde: esCritica ? AppColors.danger : AppColors.dorado,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: esCritica ? AppColors.danger : AppColors.dorado,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    esCritica
+                        ? Icons.gavel_rounded
+                        : Icons.warning_amber_rounded,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs + 2),
+                Expanded(
+                  child: Text(
+                    titulo,
+                    style: AppTypography.overline.copyWith(
+                      color: esCritica ? AppColors.guinda : AppColors.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                if (desfasadas.length > 1)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.guinda,
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                    ),
+                    child: Text(
+                      '${desfasadas.length} materias',
+                      style: AppTypography.pill.copyWith(color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              subtitulo,
+              style: AppTypography.titleLarge.copyWith(
+                fontSize: 16.5,
+                fontWeight: FontWeight.w800,
+                color: esCritica ? AppColors.guinda : AppColors.ink,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              detalle,
+              style: AppTypography.bodyMedium.copyWith(
+                fontSize: 13.5,
+                color: esCritica ? AppColors.ink : AppColors.inkSecondary,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => onIr(Seccion.solicitudes),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.guinda,
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.description_outlined, size: 18),
+                label: Text(
+                  esCritica
+                      ? 'Solicitar Dictamen de COSIE →'
+                      : 'Ver trámite de Dictamen →',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tarjeta de tiempo de permanencia en la unidad académica.
+class _TarjetaPermanenciaEscolar extends StatelessWidget {
+  const _TarjetaPermanenciaEscolar({required this.onIr});
+
+  final IrASeccion onIr;
+
+  @override
+  Widget build(BuildContext context) {
+    final transcurridos = DatosDemo.semestresTranscurridos;
+    final maximos = DatosDemo.semestresMaximosCarrera;
+    final restantes = DatosDemo.semestresRestantes;
+    final progreso = (transcurridos / maximos).clamp(0.0, 1.0);
+    final requiereExt = DatosDemo.requiereExtensionDeTiempo;
+
+    return GescoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.history_toggle_off_rounded,
+                size: 20,
+                color: AppColors.guinda,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  'Permanencia en la Unidad',
+                  style: AppTypography.titleLarge,
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: requiereExt
+                      ? AppColors.danger
+                      : restantes <= 1
+                          ? AppColors.dangerTint
+                          : AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                ),
+                child: Text(
+                  requiereExt
+                      ? 'EXCEDIDO'
+                      : 'Quedan $restantes sem.',
+                  style: AppTypography.pill.copyWith(
+                    color: requiereExt
+                        ? Colors.white
+                        : restantes <= 1
+                            ? AppColors.guinda
+                            : AppColors.inkSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Ingreso en periodo ${DatosDemo.periodoIngresoIpn} · '
+            'Semestre $transcurridos de $maximos permitidos en ${DatosDemo.carrera}',
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.inkSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm + 2),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            child: LinearProgressIndicator(
+              value: progreso,
+              minHeight: 8,
+              backgroundColor: AppColors.borderSubtle,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                requiereExt
+                    ? AppColors.danger
+                    : restantes <= 1
+                        ? AppColors.dorado
+                        : AppColors.guinda,
               ),
             ),
           ),

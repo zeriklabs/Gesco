@@ -43,6 +43,7 @@ class _PasoEscolaresState extends State<PasoEscolares> {
           const SizedBox(height: AppSpacing.sm),
 
           CamposEnFila(
+            anchoMinimo: 560,
             children: [
               GescoSelect<String>(
                 label: 'Carrera',
@@ -70,7 +71,6 @@ class _PasoEscolaresState extends State<PasoEscolares> {
                 validator: (v) => v == null ? 'Elige el plan' : null,
               ),
             ],
-            anchoMinimo: 560,
           ),
           const SizedBox(height: AppSpacing.xl),
 

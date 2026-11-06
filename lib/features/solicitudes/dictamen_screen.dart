@@ -467,9 +467,9 @@ class _DictamenScreenState extends State<DictamenScreen> {
         children: [
           if (esperandoRespuesta)
             _Propuesta(
-              sugerencia: sugerida!,
+              sugerencia: sugerida,
               onAceptar: () => setState(() {
-                _causa = sugerida!.causa;
+                _causa = sugerida.causa;
                 _respondioPropuesta = true;
                 _editandoCausa = false;
               }),

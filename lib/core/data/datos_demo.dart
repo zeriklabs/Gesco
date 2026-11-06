@@ -3,6 +3,7 @@ import '../models/documento.dart';
 import '../models/expediente.dart';
 import '../models/materia.dart';
 import '../models/tramite.dart';
+import 'catalogos.dart';
 
 /// Datos de ejemplo mientras no hay backend.
 ///
@@ -31,6 +32,36 @@ abstract final class DatosDemo {
   static const ultimoPeriodoInscrito = '26/2';
   static const ultimoNivel = 'NIVEL III';
   static const ultimoGrupo = '8CM1';
+
+  /// Límite máximo de semestres permitidos dinámicamente según la carrera del alumno.
+  static int get semestresMaximosCarrera => Catalogos.semestresMaximosDe(carrera);
+
+  static int _valorPeriodo(String p) {
+    final partes = p.split('/');
+    if (partes.length < 2) return 0;
+    final a = int.tryParse(partes[0]) ?? 0;
+    final s = int.tryParse(partes[1]) ?? 0;
+    return a * 2 + s;
+  }
+
+  /// Semestres transcurridos en la unidad académica desde su ingreso.
+  static int get semestresTranscurridos {
+    final vActual = _valorPeriodo(periodoActual);
+    final vIngreso = _valorPeriodo(periodoIngresoIpn);
+    if (vActual <= 0 || vIngreso <= 0) return 1;
+    return (vActual - vIngreso) + 1;
+  }
+
+  /// Semestres reglamentarios restantes en su carrera.
+  static int get semestresRestantes =>
+      semestresMaximosCarrera - semestresTranscurridos;
+
+  /// Indica si el estudiante superó los semestres máximos permitidos en su carrera.
+  static bool get requiereExtensionDeTiempo => semestresRestantes < 0;
+
+  /// Indica si le queda 1 o 0 semestres antes de exceder el tiempo reglamentario.
+  static bool get enRiesgoExtensionDeTiempo =>
+      semestresRestantes >= 0 && semestresRestantes <= 1;
 
   // Datos escolares que el dictamen usa para proponerle una causa al alumno.
   // Los captura él mismo en el paso 4 del registro.
@@ -231,9 +262,8 @@ abstract final class DatosDemo {
             const Documento(
               id: 'dictamen-ct',
               nombre: 'Dictamen de COSIE del CT',
-              estado: EstadoTramite.noAplica,
-              aplica: false,
-              porQueNoAplica: 'Tu expediente dice que no cuentas con dictamen.',
+              estado: EstadoTramite.sinSubir,
+              aplica: true,
             ),
             const Documento(
               id: 'baja-temporal',

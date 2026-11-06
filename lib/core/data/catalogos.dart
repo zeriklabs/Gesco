@@ -40,15 +40,33 @@ abstract final class Catalogos {
     '1RO', '2DO', '3RO', '4TO', '5TO', '6TO', '7MO', '8VO', '9NO', '10MO',
   ];
 
-  // === Por confirmar con Gestión Escolar ===================================/// Programas académicos ofertados en la UPIIZ - IPN.
+  // === Por confirmar con Gestión Escolar ===================================
+
+  /// Programas académicos ofertados en la UPIIZ - IPN.
   static const carreras = <String>[
     'ING. EN SISTEMAS COMPUTACIONALES',
     'ING. AMBIENTAL',
     'ING. MECATRÓNICA',
     'ING. EN ALIMENTOS',
     'ING. METALÚRGICA',
-    'ING. INTELIGENCIA ARTIFICIAL'
+    'ING. EN INTELIGENCIA ARTIFICIAL',
   ];
+
+  /// Límite máximo de semestres permitidos por programa académico (configurable por el administrador).
+  static const _semestresMaximosPorCarrera = <String, int>{
+    'ING. EN SISTEMAS COMPUTACIONALES': 10,
+    'ING. AMBIENTAL': 10,
+    'ING. MECATRÓNICA': 10,
+    'ING. EN ALIMENTOS': 10,
+    'ING. METALÚRGICA': 10,
+    'ING. EN INTELIGENCIA ARTIFICIAL': 10,
+  };
+
+  /// Devuelve los semestres máximos permitidos para la carrera especificada.
+  static int semestresMaximosDe(String? carrera) {
+    if (carrera == null || carrera.isEmpty) return 10;
+    return _semestresMaximosPorCarrera[carrera] ?? 10;
+  }
 
   /// Planes de estudio correspondientes a cada carrera (ej. Sistemas 2020, Ambiental 2009).
   static List<String> planesDe(String? carrera) {
@@ -94,6 +112,7 @@ abstract final class Catalogos {
   static const tipoCarga = <String>[
     'Debajo de la mínima',
     'Mínima',
+    'Por encima de la mínima',
     'Debajo de la media',
     'Media',
     'Por encima de la media',

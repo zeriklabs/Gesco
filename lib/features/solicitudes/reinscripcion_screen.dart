@@ -56,6 +56,18 @@ enum _Paso {
   final IconData icono;
 }
 
+class _DictamenEntrada {
+  final String id;
+  final String tipo; // 'CT' o 'CG'
+  final String motivo;
+
+  const _DictamenEntrada({
+    required this.id,
+    required this.tipo,
+    required this.motivo,
+  });
+}
+
 class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
   _Paso _paso = _Paso.datos;
 
@@ -82,6 +94,15 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
   bool _tieneDictamenCosie = false;
   String _semestreACursar = '5to';
   String _cargaReinscripcion = 'Media';
+
+  /// Lista de dictámenes agregados dinámicamente por el alumno.
+  final List<_DictamenEntrada> _dictamenesAgregados = [
+    const _DictamenEntrada(
+      id: 'doc-dictamen-1',
+      tipo: 'CT',
+      motivo: 'Dictamen de COSIE',
+    ),
+  ];
 
   /// Indicador de lectura de instrucciones en el paso de revisar.
   bool _instruccionesAceptadas = false;
@@ -114,6 +135,12 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
     super.initState();
     _inicializarDomicilioControllers();
     _inicializarTutorControllers();
+    final desfasadas =
+        _adeudos.where((a) => a.estaDesfasada(DatosDemo.periodoActual)).toList();
+    if (desfasadas.isNotEmpty || DatosDemo.requiereExtensionDeTiempo) {
+      _tieneDictamenCosie = true;
+      _esIrregular = true;
+    }
   }
 
   void _inicializarDomicilioControllers() {
@@ -245,6 +272,29 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
       );
     }
 
+    final dictamenAplica = _tieneDictamenCosie ||
+        _cargaReinscripcion == 'Debajo de la mínima';
+
+    final docsDictamenes = dictamenAplica
+        ? [
+            for (final d in _dictamenesAgregados)
+              crearDoc(
+                id: d.id,
+                nombre:
+                    'Dictamen de COSIE (${d.tipo == 'CG' ? 'Consejo General - CG' : 'Consejo Técnico - CT'})${d.motivo.isNotEmpty ? ' · ${d.motivo}' : ''}',
+                aplica: true,
+              ),
+          ]
+        : [
+            crearDoc(
+              id: 'doc-dictamen-placeholder',
+              nombre: 'Dictamen de COSIE (CT / CG)',
+              aplica: false,
+              porQueNoAplica:
+                  'No aplica porque indicaste que no cuentas con dictamen COSIE y tu carga académica es igual o superior a la mínima.',
+            ),
+          ];
+
     return [
       crearDoc(
         id: 'doc-saes',
@@ -275,14 +325,7 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
         porQueNoAplica:
             'No aplica porque no provienes de otro programa académico.',
       ),
-      crearDoc(
-        id: 'doc-dictamen',
-        nombre: 'Dictamen emitido por el COSIE o CT',
-        aplica: _esIrregular && _tieneDictamenCosie,
-        porQueNoAplica: !_esIrregular
-            ? 'No aplica porque tu situación académica es regular.'
-            : 'No aplica porque indicaste que no cuentas con dictamen COSIE/CT.',
-      ),
+      ...docsDictamenes,
       crearDoc(
         id: 'doc-carga-minima',
         nombre: 'Oficio de inscripción por debajo de la carga mínima',
@@ -1311,6 +1354,8 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
 
   Widget _pasoAdeudos() {
     final esDebajoMinima = _cargaReinscripcion == 'Debajo de la mínima';
+    final desfasadas =
+        _adeudos.where((a) => a.estaDesfasada(DatosDemo.periodoActual)).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1322,6 +1367,99 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
               'inscripción, carga de materias y documentos requeridos.',
         ),
         const SizedBox(height: AppSpacing.lg),
+
+        if (desfasadas.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.dangerTint,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: AppColors.danger),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.gavel_rounded,
+                  color: AppColors.guinda,
+                  size: 22,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '¡Materia desfasada detectada! (Requiere Dictamen de COSIE)',
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.guinda,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tienes ${desfasadas.length} materia(s) desfasada(s) por exceder 1 año (2 periodos) sin acreditar '
+                        '(${desfasadas.map((m) => m.unidadAprendizaje).join(', ')}). '
+                        'Por reglamento del IPN es obligatorio contar con un Dictamen de COSIE para completar tu reinscripción.',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.ink,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+
+        if (DatosDemo.requiereExtensionDeTiempo) ...[
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.dangerTint,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: AppColors.danger),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.history_toggle_off_rounded,
+                  color: AppColors.guinda,
+                  size: 22,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '¡Límite de semestres excedido! (Requiere Dictamen de Extensión de Tiempo)',
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.guinda,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Has cursado ${DatosDemo.semestresTranscurridos} semestres de los ${DatosDemo.semestresMaximosCarrera} máximos permitidos en ${DatosDemo.carrera}. '
+                        'Por reglamento del IPN es obligatorio tramitar un Dictamen de Extensión de Tiempo ante el COSIE.',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.ink,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
 
         // 1. Estado y Dictamen
         GescoCard(
@@ -1420,7 +1558,7 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
               ),
 
               if (_esIrregular) ...[
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.sm),
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
@@ -1428,64 +1566,64 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(color: AppColors.warningBorder),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.info_outline_rounded,
-                            color: AppColors.dorado,
-                            size: 18,
-                          ),
-                          const SizedBox(width: AppSpacing.xs),
-                          Text(
-                            'Tipo de inscripción: Después de ETS',
-                            style: AppTypography.bodyMedium.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.ink,
-                            ),
-                          ),
-                        ],
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        color: AppColors.dorado,
+                        size: 18,
                       ),
-                      const SizedBox(height: AppSpacing.md),
-                      OpcionSiNo(
-                        label: '¿Tienes dictamen emitido por el COSIE?',
-                        value: _tieneDictamenCosie,
-                        onChanged: (val) =>
-                            setState(() => _tieneDictamenCosie = val),
-                      ),
-                      if (_tieneDictamenCosie) ...[
-                        const SizedBox(height: AppSpacing.sm),
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.dangerTint,
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
-                            border: Border.all(color: AppColors.dangerBorder),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.warning_amber_rounded,
-                                color: AppColors.guinda,
-                                size: 20,
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Expanded(
-                                child: Text(
-                                  'Atención: Al contar con dictamen, necesitarás subir tu dictamen emitido por el COSIE o CT en el siguiente paso.',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.ink,
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ),
-                            ],
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        child: Text(
+                          'Tipo de inscripción: Después de ETS',
+                          style: AppTypography.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.md),
+
+              // Dictamen emitido por el COSIE
+              OpcionSiNo(
+                label: '¿Tienes dictamen emitido por el COSIE?',
+                value: _tieneDictamenCosie,
+                onChanged: (val) =>
+                    setState(() => _tieneDictamenCosie = val),
+              ),
+              if (_tieneDictamenCosie || esDebajoMinima) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.dangerTint,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(color: AppColors.dangerBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppColors.guinda,
+                        size: 20,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          'Atención: Al contar con dictamen${esDebajoMinima ? ' o reinscribirte por debajo de la carga mínima' : ''}, '
+                          'necesitarás subir en el siguiente paso tus dictámenes emitidos (ya sea de Consejo Técnico CT, Consejo General CG o ambos).',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.ink,
+                            fontWeight: FontWeight.w700,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1534,6 +1672,7 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
                 opciones: const [
                   'Debajo de la mínima',
                   'Mínima',
+                  'Por encima de la mínima',
                   'Debajo de la media',
                   'Media',
                   'Por encima de la media',
@@ -1566,7 +1705,7 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
                         child: Text(
                           'Atención: Al reinscribirte por debajo de la carga mínima, '
                           'necesitarás subir el oficio de inscripción por debajo de la mínima '
-                          'en el siguiente paso.',
+                          'y el dictamen emitido por el COSIE o CT en el siguiente paso.',
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.ink,
                             fontWeight: FontWeight.w700,
@@ -1619,20 +1758,121 @@ class _ReinscripcionScreenState extends State<ReinscripcionScreen> {
     );
   }
 
+  void _mostrarDialogoAgregarDictamen() {
+    String tipo = 'Consejo Técnico (CT)';
+    final motivoController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Agregar dictamen de COSIE'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Selecciona el órgano que emite el dictamen y el motivo o descripción (opcional).',
+              style: AppTypography.bodySmall,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            StatefulBuilder(
+              builder: (ctx, setDialogState) => GescoSelect<String>(
+                label: 'Tipo de dictamen',
+                value: tipo,
+                opciones: const [
+                  'Consejo Técnico (CT)',
+                  'Consejo General (CG)',
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setDialogState(() => tipo = val);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            GescoTextField(
+              label: 'Motivo / Trámite (Opcional)',
+              controller: motivoController,
+              hintText: 'Ej. Carga mínima, Extensión de tiempo, Recurso',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.guinda,
+              foregroundColor: AppColors.onGuinda,
+            ),
+            onPressed: () {
+              final nuevoId =
+                  'doc-dictamen-${DateTime.now().millisecondsSinceEpoch}';
+              final nuevoTipo = tipo.contains('General') ? 'CG' : 'CT';
+              final motivo = motivoController.text.trim();
+
+              setState(() {
+                _dictamenesAgregados.add(
+                  _DictamenEntrada(
+                    id: nuevoId,
+                    tipo: nuevoTipo,
+                    motivo: motivo.isNotEmpty
+                        ? motivo
+                        : (nuevoTipo == 'CG'
+                            ? 'Consejo General'
+                            : 'Consejo Técnico'),
+                  ),
+                );
+              });
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Agregar dictamen'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _eliminarDictamen(String id) {
+    if (_dictamenesAgregados.length <= 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes conservar al menos un dictamen.'),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _dictamenesAgregados.removeWhere((d) => d.id == id);
+      _documentosSubidos.remove(id);
+    });
+  }
+
   // --- Paso 3: documentos ---------------------------------------------------
 
   Widget _pasoDocumentos() {
+    final dictamenAplica = _tieneDictamenCosie ||
+        _cargaReinscripcion == 'Debajo de la mínima';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const _Intro(
           titulo: 'Lo que tienes que entregar',
-          texto: 'Solo los que te tocan según tu situación. Los que no te '
-              'aplican van abajo, con el motivo, por si crees que el sistema '
-              'se equivocó.',
+          texto: 'Solo los que te tocan según tu situación. Puedes adjuntar '
+              'múltiples dictámenes de COSIE (CT / CG) si cuentas con más de uno.',
         ),
         const SizedBox(height: AppSpacing.lg),
-        _BloqueDocumentos(tramite: _tramiteActual, onSubir: _subir),
+        _BloqueDocumentos(
+          tramite: _tramiteActual,
+          onSubir: _subir,
+          onAgregarDictamen: _mostrarDialogoAgregarDictamen,
+          onEliminarDictamen: _eliminarDictamen,
+          dictamenAplica: dictamenAplica,
+        ),
       ],
     );
   }
@@ -2019,10 +2259,19 @@ class _PuntoInstruccion extends StatelessWidget {
 /// actual: en vez de ocho documentos sueltos en otra pestaña, los tres que te
 /// tocan, junto al botón que genera el PDF.
 class _BloqueDocumentos extends StatelessWidget {
-  const _BloqueDocumentos({required this.tramite, required this.onSubir});
+  const _BloqueDocumentos({
+    required this.tramite,
+    required this.onSubir,
+    this.onAgregarDictamen,
+    this.onEliminarDictamen,
+    this.dictamenAplica = false,
+  });
 
   final Tramite tramite;
   final void Function(Documento) onSubir;
+  final VoidCallback? onAgregarDictamen;
+  final void Function(String)? onEliminarDictamen;
+  final bool dictamenAplica;
 
   @override
   Widget build(BuildContext context) {
@@ -2056,21 +2305,51 @@ class _BloqueDocumentos extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'Solo los que te tocan, según tu situación: carga por debajo de '
-            'la mínima, sin dictamen, sin baja previa.',
+            'Solo los que te tocan, según tu situación. Puedes adjuntar múltiples dictámenes de COSIE si cuentas con más de uno.',
             style: AppTypography.hint,
           ),
           const SizedBox(height: AppSpacing.md),
 
-          for (final d in aplican)
+          for (final d in aplican) ...[
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-              child: FilaDocumento(
-                documento: d,
-                onSubir: () => onSubir(d),
-                compacta: true,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FilaDocumento(
+                      documento: d,
+                      onSubir: () => onSubir(d),
+                      compacta: true,
+                    ),
+                  ),
+                  if (d.id.startsWith('doc-dictamen-') &&
+                      onEliminarDictamen != null &&
+                      aplican.where((doc) => doc.id.startsWith('doc-dictamen-')).length > 1) ...[
+                    const SizedBox(width: AppSpacing.xs),
+                    IconButton(
+                      tooltip: 'Eliminar dictamen',
+                      icon: const Icon(Icons.delete_outline_rounded,
+                          color: AppColors.danger, size: 20),
+                      onPressed: () => onEliminarDictamen!(d.id),
+                    ),
+                  ],
+                ],
               ),
             ),
+          ],
+
+          if (dictamenAplica && onAgregarDictamen != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            OutlinedButton.icon(
+              onPressed: onAgregarDictamen,
+              icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+              label: const Text('Agregar otro dictamen de COSIE (CT / CG)'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.guinda,
+                side: const BorderSide(color: AppColors.guinda),
+              ),
+            ),
+          ],
 
           if (noAplican.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
@@ -2094,7 +2373,7 @@ class _BloqueDocumentos extends StatelessWidget {
                     tramite.listoParaGenerar
                         ? 'Ya puedes generar el PDF. No entregues nada impreso '
                             'antes de eso.'
-                        : 'Genera el PDF cuando los tres estén aprobados.',
+                        : 'Genera el PDF cuando todos los documentos requeridos estén cargados o aprobados.',
                     style: AppTypography.hint.copyWith(
                       color: AppColors.warningInk,
                       fontWeight: FontWeight.w600,
@@ -2476,13 +2755,15 @@ class _HojaUnica extends StatelessWidget {
             widget.esIrregular ? 'IRREGULAR (DESPUÉS DE ETS)' : 'REGULAR',
             widget.provieneDeBaja ? 'SÍ' : 'NO',
             widget.provieneDeCambioPrograma ? 'SÍ' : 'NO',
-            widget.tieneDictamenCosie ? 'SÍ' : 'NO',
+            (widget.tieneDictamenCosie || widget.carga == 'Debajo de la mínima')
+                ? 'SÍ'
+                : 'NO',
           ],
           etiquetas: [
             'SITUACIÓN',
             '¿BAJA PREVIA?',
             '¿CAMBIO PROGRAMA?',
-            '¿DICTAMEN COSIE/CT?'
+            '¿DICTAMEN COSIE?'
           ],
           pesos: [2, 1, 1, 1],
         ),

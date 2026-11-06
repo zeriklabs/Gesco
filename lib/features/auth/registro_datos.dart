@@ -137,7 +137,7 @@ class RegistroDatos {
       if (calle.text.isNotEmpty) calle.text,
       if (numeroExterior.text.isNotEmpty) numeroExterior.text,
       if (colonia.text.isNotEmpty) colonia.text,
-      if (municipio != null) municipio!,
+      ?municipio,
     ];
     return partes.isEmpty ? 'Sin capturar' : partes.join(', ');
   }

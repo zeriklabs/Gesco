@@ -143,6 +143,7 @@ abstract final class DatosDemoAdmin {
         estados: {
           'donativo': EstadoTramite.enRevision,
           'pordebajominima': EstadoTramite.enRevision,
+          'DICTAMENCT': EstadoTramite.enRevision,
           'horariosaes': EstadoTramite.enRevision,
           'DatosSAES': EstadoTramite.aprobado,
         },

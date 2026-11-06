@@ -23,7 +23,7 @@ class _ReinscriptionWizardScreenState extends State<ReinscriptionWizardScreen> {
   final TextEditingController _numIntController = TextEditingController(text: 'B-304');
   final TextEditingController _coloniaController = TextEditingController(text: 'Zacatenco');
   final TextEditingController _cpController = TextEditingController(text: '07738');
-  String _estadoController = 'Ciudad de México';
+  final String _estadoController = 'Ciudad de México';
   final TextEditingController _municipioController = TextEditingController(text: 'Gustavo A. Madero');
 
   // Controladores Paso 2: Tutor
@@ -41,7 +41,7 @@ class _ReinscriptionWizardScreenState extends State<ReinscriptionWizardScreen> {
   final TextEditingController _tutorNumIntController = TextEditingController(text: 'S/N');
   final TextEditingController _tutorColoniaController = TextEditingController(text: 'Del Valle');
   final TextEditingController _tutorCpController = TextEditingController(text: '03100');
-  String _tutorEstado = 'Ciudad de México';
+  final String _tutorEstado = 'Ciudad de México';
   final TextEditingController _tutorMunicipio = TextEditingController(text: 'Benito Juárez');
 
   @override
@@ -243,14 +243,14 @@ class _ReinscriptionWizardScreenState extends State<ReinscriptionWizardScreen> {
                 const Text('Información General y Contacto', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
                 const SizedBox(height: 16),
                 _buildFieldStacked('Género', DropdownButtonFormField<String>(
-                  value: _generoSeleccionado,
+                  initialValue: _generoSeleccionado,
                   decoration: _inputDecoration(),
                   items: ['Masculino', 'Femenino', 'Otro'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                   onChanged: (val) => setState(() => _generoSeleccionado = val!),
                 )),
                 const SizedBox(height: 14),
                 _buildFieldStacked('Estado civil', DropdownButtonFormField<String>(
-                  value: _estadoCivilSeleccionado,
+                  initialValue: _estadoCivilSeleccionado,
                   decoration: _inputDecoration(),
                   items: ['Soltero(a)', 'Casado(a)', 'Unión Libre', 'Divorciado(a)'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                   onChanged: (val) => setState(() => _estadoCivilSeleccionado = val!),
@@ -384,7 +384,7 @@ class _ReinscriptionWizardScreenState extends State<ReinscriptionWizardScreen> {
                 ),
                 const SizedBox(height: 14),
                 _buildFieldStacked('Parentesco', DropdownButtonFormField<String>(
-                  value: _tutorParentesco,
+                  initialValue: _tutorParentesco,
                   decoration: _inputDecoration(),
                   items: ['Padre', 'Madre', 'Tutor Legal', 'Abuelo/a', 'Tío/a', 'Otro'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                   onChanged: (val) => setState(() => _tutorParentesco = val!),
@@ -809,7 +809,7 @@ class _ReinscriptionWizardScreenState extends State<ReinscriptionWizardScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: DropdownButtonFormField<String>(
-            value: value,
+            initialValue: value,
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,

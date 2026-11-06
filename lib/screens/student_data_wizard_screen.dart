@@ -64,7 +64,7 @@ class _StudentDataWizardScreenState extends State<StudentDataWizardScreen> {
   final TextEditingController _tutorNumExtController = TextEditingController(text: '1500');
   final TextEditingController _tutorColoniaController = TextEditingController(text: 'Del Valle');
   final TextEditingController _tutorCpController = TextEditingController(text: '03100');
-  String _tutorEstadoSeleccionado = 'Ciudad de México';
+  final String _tutorEstadoSeleccionado = 'Ciudad de México';
   final TextEditingController _tutorMunicipioController = TextEditingController(text: 'Benito Juárez');
 
   @override
@@ -494,7 +494,7 @@ class _StudentDataWizardScreenState extends State<StudentDataWizardScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: DropdownButtonFormField<String>(
-                                value: _estadoCivilSeleccionado,
+                                initialValue: _estadoCivilSeleccionado,
                                 decoration: _inputDecoration('Estado Civil', Icons.favorite_border),
                                 items: ['Soltero(a)', 'Casado(a)', 'Unión Libre', 'Divorciado(a)']
                                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -506,7 +506,7 @@ class _StudentDataWizardScreenState extends State<StudentDataWizardScreen> {
                         ),
                         const SizedBox(height: 14),
                         DropdownButtonFormField<String>(
-                          value: _trabajasSeleccionado,
+                          initialValue: _trabajasSeleccionado,
                           decoration: _inputDecoration('¿Actualmentes Trabajas?', Icons.work_outline),
                           items: ['Sí', 'No'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                           onChanged: _isEditing ? (val) => setState(() => _trabajasSeleccionado = val!) : null,
@@ -543,7 +543,7 @@ class _StudentDataWizardScreenState extends State<StudentDataWizardScreen> {
                           children: [
                             Expanded(
                               child: DropdownButtonFormField<String>(
-                                value: _estadoDomicilioSeleccionado,
+                                initialValue: _estadoDomicilioSeleccionado,
                                 decoration: _inputDecoration('Estado', Icons.map_outlined),
                                 items: _estadosMexico
                                     .map((est) => DropdownMenuItem(value: est, child: Text(est, overflow: TextOverflow.ellipsis)))
@@ -571,7 +571,7 @@ class _StudentDataWizardScreenState extends State<StudentDataWizardScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: DropdownButtonFormField<String>(
-                                value: _tutorParentescoSeleccionado,
+                                initialValue: _tutorParentescoSeleccionado,
                                 decoration: _inputDecoration('Parentesco', Icons.family_restroom_outlined),
                                 items: _opcionesParentesco
                                     .map((p) => DropdownMenuItem(value: p, child: Text(p)))

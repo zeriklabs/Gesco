@@ -47,6 +47,7 @@ class _PasoTutorState extends State<PasoTutor> {
           const SeccionForm(titulo: 'Quién es'),
 
           CamposEnFila(
+            anchoMinimo: 560,
             children: [
               GescoTextField(
                 label: 'Nombre(s)',
@@ -70,7 +71,6 @@ class _PasoTutorState extends State<PasoTutor> {
                 textCapitalization: TextCapitalization.characters,
               ),
             ],
-            anchoMinimo: 560,
           ),
           const SizedBox(height: AppSpacing.lg),
 
@@ -99,6 +99,7 @@ class _PasoTutorState extends State<PasoTutor> {
           const SeccionForm(titulo: 'Cómo localizarlo'),
 
           CamposEnFila(
+            anchoMinimo: 560,
             children: [
               GescoTextField(
                 label: 'Teléfono celular',
@@ -126,7 +127,6 @@ class _PasoTutorState extends State<PasoTutor> {
                 validator: (v) => Validators.telefono(v, obligatorio: false),
               ),
             ],
-            anchoMinimo: 560,
           ),
           const SizedBox(height: AppSpacing.xl),
 
@@ -144,6 +144,7 @@ class _PasoTutorState extends State<PasoTutor> {
           if (!d.tutorMismoDomicilio) ...[
             const SizedBox(height: AppSpacing.lg),
             CamposEnFila(
+              anchoMinimo: 560,
               children: [
                 GescoTextField(
                   label: 'Código postal',
@@ -195,7 +196,6 @@ class _PasoTutorState extends State<PasoTutor> {
                   validator: (v) => v == null ? 'Elige el municipio' : null,
                 ),
               ],
-              anchoMinimo: 560,
             ),
             const SizedBox(height: AppSpacing.lg),
 
@@ -278,6 +278,7 @@ class _PasoTutorState extends State<PasoTutor> {
             const SizedBox(height: AppSpacing.lg),
             CamposEnFila(
               flex: const [2, 1, 1],
+              anchoMinimo: 520,
               children: [
                 GescoTextField(
                   label: 'Calle',
@@ -299,7 +300,6 @@ class _PasoTutorState extends State<PasoTutor> {
                   hintText: 'Opcional',
                 ),
               ],
-              anchoMinimo: 520,
             ),
           ],
         ],
